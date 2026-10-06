@@ -6,6 +6,9 @@ import { UIManager } from './ui/UIManager.js';
 
 // Inicialização das cascas de visual/UI
 FeedbackSystem.init();
+import { UpgradeSystem } from './progression/UpgradeSystem.js';
+// ... outros imports
+UpgradeSystem.init(); // Adicione logo após o FeedbackSystem.init()
 UIManager.init();
 
 // Carrega persistência inicial (se houver)
