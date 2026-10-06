@@ -3,7 +3,7 @@ import { ModifierSystem } from '../core/ModifierSystem.js';
 import { EventBus } from '../core/EventBus.js';
 
 export const UpgradeSystem = {
-    currentChoices: [], // Estado de segurança anti-exploit
+    currentChoices: [], 
 
     init() {
         EventBus.on("showUpgradeChoices", (choices) => {
@@ -11,28 +11,28 @@ export const UpgradeSystem = {
         });
     },
 
-    selectUpgrade(upgradeId) {
-        if (!GameState.run.isPaused) return;
-        if (!this.currentChoices.includes(upgradeId)) {
-            console.warn("Anti-exploit: Invalid upgrade selection.");
-            return;
+    selectUpgrade(upgradeId, forceBypass = false) {
+        // Se forceBypass é true, ignora pausas/currentChoices (útil para Eventos injetando upgrades diretos)
+        if (!forceBypass) {
+            if (!GameState.run.isPaused) return;
+            if (!this.currentChoices.includes(upgradeId)) {
+                console.warn("Anti-exploit: Invalid upgrade selection.");
+                return;
+            }
+            this.currentChoices = [];
         }
 
-        // Limpa escolhas para impedir duplo clique
-        this.currentChoices = [];
-
-        // Adiciona ao stack
         if (!GameState.run.activeUpgrades[upgradeId]) {
             GameState.run.activeUpgrades[upgradeId] = 0;
         }
         GameState.run.activeUpgrades[upgradeId]++;
 
-        // Recalcula stats
         ModifierSystem.recalculateStats();
 
-        // Retoma o jogo
-        GameState.run.isPaused = false;
-        EventBus.emit("upgradeApplied");
-        EventBus.emit("stateUpdated");
+        if (!forceBypass) {
+            GameState.run.isPaused = false;
+            EventBus.emit("upgradeApplied");
+            EventBus.emit("stateUpdated");
+        }
     }
 };
