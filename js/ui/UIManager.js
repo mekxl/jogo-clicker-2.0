@@ -20,6 +20,9 @@ export const UIManager = {
             upgradeContainer: document.getElementById('upgrade-choices-container'),
             metaModal: document.getElementById('meta-modal'),
             metaContainer: document.getElementById('meta-upgrades-container'),
+            this.els.encounter = document.getElementById('ui-encounter'),
+            this.els.enemyName = document.getElementById('ui-enemy-name'),
+            this.els.break = document.getElementById('ui-break'),
             
             endClicks: document.getElementById('end-clicks'),
             endDmg: document.getElementById('end-dmg'),
@@ -46,7 +49,21 @@ export const UIManager = {
     updateAll() {
         if (!GameState.run.isRunActive) return;
         const r = GameState.run;
+        const enemy = EnemySystem.getActiveEnemy();
         const fn = NumberSystem.formatNumber.bind(NumberSystem);
+
+        if (enemy) {
+            this.els.encounter.innerText = r.encounterIndex;
+            this.els.enemyName.innerText = enemy.name;
+            this.els.enemyName.style.color = enemy.color;
+            this.els.hp.innerText = `${fn(enemy.currentHP)}/${fn(enemy.maxHP)}`;
+
+            if(enemy.state === "BREAKING") {
+                this.els.break.innerText = "VULNERABLE!";
+                } else {
+                this.els.break.innerText = `${fn(enemy.breakCurrent)}/${fn(enemy.breakMax)}`;
+            }
+        }
 
         this.els.hp.innerText = `${fn(r.currentHP)}/${fn(r.maxHP)}`;
         this.els.energy.innerText = fn(r.energy);
