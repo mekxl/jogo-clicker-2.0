@@ -1,19 +1,24 @@
-Current stage: 3/9
+# Estado do Projeto
 
-IMPLEMENTADO:
-- EnemySystem (Fragment, Parasite, Unstable, Mirror, Colossus).
-- EncounterManager (Fluxo linear de Run -> Inimigo -> Recompensa -> Novo Inimigo).
-- BreakSystem isolado (HP vs Break Resource, estado Vulnerável de 3s).
-- Scaling Progressivo via Level.
-- Anti-exploit reforçado (Death síncrona com timer de spawn isolado).
-- Feedback dinâmico de Core alterando classe/cor por estado do Inimigo.
+- **Estágio Atual:** 4 / 9
+- **Status:** Relíquias (Builds & Sinergias) implementadas via ModifierSystem determinístico.
 
-NÃO IMPLEMENTADO:
-- Sistema completo de Boss (apenas espaço preparado no EncounterManager).
-- Relíquias, Eventos, Merchant, Ascension.
+## IMPLEMENTADO
+- Engine baseada em ES Modules.
+- Upgrades Temporários baseados em milestones de Clique.
+- Progressão Meta (FoV) e Salve Automático.
+- Sistema de Break e Encuentros progressivos.
+- **NOVO:** RelicSystem gerenciando tags, stacks e uniqueness.
+- **NOVO:** 50 Relíquias com diferentes arquétipos (Click, Combo, Break, Crit, Risk).
+- **NOVO:** Sistema de Sinergias (Bônus automáticos desbloqueados por combinações de Tags).
+- **NOVO:** Relic Modal compartilhado logicamente com Upgrade Modal, mas roteado via EventBus separado.
+- **NOVO:** Painel Lateral (`aside`) exibindo as relíquias ativas e sinergias desbloqueadas.
 
-PROBLEMAS CONHECIDOS:
-- (Nenhum impeditivo atual).
+## NÃO IMPLEMENTADO
+- Bosses, Mecânicas de Automação (Drones), Merchant, Ascension/Challenges.
 
-PRÓXIMO ESTÁGIO:
-- Mecânica de Relíquias e/ou Eventos Especiais a depender da diretriz do Prompt 4.
+## PROBLEMAS CONHECIDOS
+- Nenhum impeditivo atual.
+
+## PRÓXIMO ESTÁGIO
+- Aguardando definição (Bosses, Eventos ou Automação previstos).
