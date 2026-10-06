@@ -3,13 +3,10 @@ import { EventBus } from '../core/EventBus.js';
 import { EnemySystem } from './EnemySystem.js';
 
 export const BreakSystem = {
-    breakMultiplier: 1.5,
-    breakDurationMs: 3000,
     breakTimer: null,
 
     takeBreakDamage(amount) {
         const enemy = EnemySystem.getActiveEnemy();
-        // Apenas aplica dano de BREAK se o inimigo estiver ativo e vulnerável a ser quebrado
         if (!enemy || enemy.state !== "ACTIVE") return;
 
         enemy.breakCurrent -= amount;
@@ -29,10 +26,11 @@ export const BreakSystem = {
         
         if (this.breakTimer) clearTimeout(this.breakTimer);
         
-        // Ciclo de recuperação do BREAK
+        const duration = GameState.run.stats.breakDurationMs || 3000;
+        
         this.breakTimer = setTimeout(() => {
             this.recoverBreak(enemy);
-        }, this.breakDurationMs);
+        }, duration);
     },
 
     recoverBreak(enemy) {
