@@ -1,29 +1,19 @@
-# Estado do Projeto
+Current stage: 3/9
 
-- **Estágio Atual:** 1 / 9
-- **Status da Arquitetura:** Base modular concluída e testada.
+IMPLEMENTADO:
+- EnemySystem (Fragment, Parasite, Unstable, Mirror, Colossus).
+- EncounterManager (Fluxo linear de Run -> Inimigo -> Recompensa -> Novo Inimigo).
+- BreakSystem isolado (HP vs Break Resource, estado Vulnerável de 3s).
+- Scaling Progressivo via Level.
+- Anti-exploit reforçado (Death síncrona com timer de spawn isolado).
+- Feedback dinâmico de Core alterando classe/cor por estado do Inimigo.
 
-## Sistemas Implementados
-- EventBus (Pub/Sub)
-- GameState (Run / Meta)
-- RunManager (Start / End / Restart)
-- DamageSystem (Processamento de Clique)
-- TargetSystem (HP e Estado do Alvo)
-- CurrencySystem (Energy simples)
-- ComboSystem (Incremento e thresholds)
-- NumberSystem (Formatação local básica com sanitização)
-- SaveSystem (MetaState via localStorage)
-- FeedbackSystem (Floating damage e Core pulse)
-- UIManager (Atualização reativa de interface)
+NÃO IMPLEMENTADO:
+- Sistema completo de Boss (apenas espaço preparado no EncounterManager).
+- Relíquias, Eventos, Merchant, Ascension.
 
-## Sistemas Pendentes (Não Implementados)
-- Upgrades
-- Relíquias
-- Bosses e Múltiplos Inimigos
-- Mecânica BREAK e Frenzy
-- Eventos e Merchant
-- Fragments of Void (Meta currency)
-- Sistema de Partículas Avançado e Áudio
+PROBLEMAS CONHECIDOS:
+- (Nenhum impeditivo atual).
 
-## Próximo Estágio Recomendado
-Implementação do sistema de **Upgrades** ou a transição para **Múltiplos Inimigos**, dependendo do Prompt 2.
+PRÓXIMO ESTÁGIO:
+- Mecânica de Relíquias e/ou Eventos Especiais a depender da diretriz do Prompt 4.
