@@ -46,6 +46,37 @@
         <button id="btn-restart">INICIAR NOVA RUN</button>
     </div>
 
+    
+<!-- Top Bar modificada (Adicionar barra secundária) -->
+    <div class="meta-bar">
+        <span>FRAGMENTS OF VOID: <span id="ui-fov" class="text-fov">0</span></span>
+        <button id="btn-open-meta" class="small-btn">META PROGRESSION</button>
+    </div>
+
+    <!-- Modals Overlay -->
+    <div id="upgrade-modal" class="overlay hidden">
+        <h2>SELECT UPGRADE</h2>
+        <div id="upgrade-choices-container" class="cards-container"></div>
+    </div>
+
+    <div id="meta-modal" class="overlay hidden">
+        <h2>META PROGRESSION</h2>
+        <p>Gaste Fragments of Void para melhorias permanentes.</p>
+        <div id="meta-upgrades-container" class="list-container"></div>
+        <button id="btn-close-meta" class="close-btn">FECHAR</button>
+    </div>
+
+    <!-- Tela de fim de run atualizada (já existe no seu HTML, modifique o conteúdo): -->
+    <div id="game-over-screen" class="overlay hidden">
+        <h1>RUN ENDED</h1>
+        <div class="run-summary">
+            <p>Total Clicks: <span id="end-clicks"></span></p>
+            <p>Total Damage: <span id="end-dmg"></span></p>
+            <p class="text-fov">Fragments of Void Gained: +<span id="end-fov"></span></p>
+        </div>
+        <button id="btn-restart">INICIAR NOVA RUN</button>
+    </div>
+    
     <!-- Ponto de entrada modular -->
     <script type="module" src="js/main.js"></script>
 </body>
