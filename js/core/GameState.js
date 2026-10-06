@@ -27,14 +27,28 @@ export const GameState = {
             maxCombo: 0,
             comboMultiplier: 1,
             totalDamage: 0,
-            encounterIndex: 0,
+            
+            encounterIndex: 0, // Qual Node/Room estamos
+            combatCount: 0,    // Quantos inimigos de fato matamos
             enemiesDefeated: 0,
             totalBreaks: 0,
             
+            eventState: "NONE", // NONE, ACTIVE, RESOLVING
+            merchantState: "NONE",
+            merchantRerolls: 0,
+            skipNextCombat: false, // Efeito de eventos
+            
             activeUpgrades: {},
-            activeRelics: {}, // NOVO
-            activeSynergies: [], // NOVO
+            activeRelics: {}, 
+            activeSynergies: [], 
             milestoneIndex: 0,
+            
+            // Modificadores extras vindos de eventos que sobrevivem na run
+            eventModifiers: {
+                baseDamage: 0,
+                comboEffectiveness: 0,
+                energyPerClick: 0
+            },
             
             stats: {
                 damagePerClick: 1,
@@ -44,8 +58,6 @@ export const GameState = {
                 comboEffectiveness: 1.0,
                 globalMultiplier: 1.0,
                 fovBonus: 1.0,
-                
-                // Novos stats integrados de Relíquias/Break
                 breakDamage: 1,
                 breakMultiplier: 1.5,
                 breakDurationMs: 3000,
