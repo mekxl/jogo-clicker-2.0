@@ -1,10 +1,14 @@
 import { GameState } from './GameState.js';
 
 export const SaveSystem = {
-    saveKey: 'BREAK_CORE_SAVE_V1',
+    saveKey: 'BREAK_CORE_SAVE',
+    version: 1,
 
     save() {
-        const data = { meta: GameState.meta }; // Somente MetaState é persistente
+        const data = { 
+            version: this.version,
+            meta: GameState.meta 
+        };
         localStorage.setItem(this.saveKey, JSON.stringify(data));
     },
     load() {
@@ -12,7 +16,16 @@ export const SaveSystem = {
         if (savedData) {
             try {
                 const parsed = JSON.parse(savedData);
-                if (parsed.meta) GameState.meta = parsed.meta;
+                // Simple Migration / Merge seguro
+                if (parsed.meta) {
+                    GameState.meta.totalClicks = parsed.meta.totalClicks || 0;
+                    GameState.meta.highestDamageHit = parsed.meta.highestDamageHit || 0;
+                    GameState.meta.fragmentsOfVoid = parsed.meta.fragmentsOfVoid || 0;
+                    
+                    if (parsed.meta.metaUpgrades) {
+                        GameState.meta.metaUpgrades = { ...GameState.meta.metaUpgrades, ...parsed.meta.metaUpgrades };
+                    }
+                }
             } catch (e) {
                 console.error("Save file corrupted.", e);
             }
