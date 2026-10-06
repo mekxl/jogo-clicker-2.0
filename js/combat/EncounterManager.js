@@ -3,49 +3,84 @@ import { EventBus } from '../core/EventBus.js';
 import { EnemySystem } from './EnemySystem.js';
 import { ENEMIES } from '../data/enemies.js';
 import { RelicSystem } from '../progression/RelicSystem.js';
+import { EventSystem } from '../events/EventSystem.js';
+import { MerchantSystem } from '../events/MerchantSystem.js';
 
 export const EncounterManager = {
     initRun() {
-        GameState.run.encounterIndex = 1;
-        this.spawnNextEncounter();
+        GameState.run.encounterIndex = 0;
+        this.advanceNode();
     },
 
-    spawnNextEncounter() {
+    advanceNode() {
+        if (!GameState.run.isRunActive) return;
+        GameState.run.encounterIndex++;
+        const nodeIndex = GameState.run.encounterIndex;
+
+        EventBus.emit("encounterStarted", nodeIndex);
+
+        // O Fluxo Linear dos Nodos:
+        // A cada 5 Nodos -> Merchant
+        // A cada 4 Nodos (exceto se for múltiplo de 5) -> Event
+        // Outros -> Combat
+
+        if (nodeIndex % 5 === 0) {
+            MerchantSystem.triggerMerchant();
+        } else if (nodeIndex % 4 === 0) {
+            EventSystem.triggerRandomEvent();
+        } else {
+            // Se o evento RIFT ativou "skipNextCombat", pulamos esse nodo.
+            if (GameState.run.skipNextCombat) {
+                GameState.run.skipNextCombat = false;
+                setTimeout(() => this.advanceNode(), 500); // UI feedback curto e pula
+            } else {
+                this.spawnCombat();
+            }
+        }
+    },
+
+    spawnCombat() {
         const level = GameState.run.encounterIndex;
-        const enemyKey = this.selectEnemy(level);
+        const keys = Object.keys(ENEMIES);
+        const enemyKey = keys[Math.floor(Math.random() * keys.length)];
         
         EnemySystem.initEnemy(ENEMIES[enemyKey], level);
-        EventBus.emit("encounterStarted", level);
-    },
-
-    selectEnemy(level) {
-        const keys = Object.keys(ENEMIES);
-        return keys[Math.floor(Math.random() * keys.length)];
     },
 
     onEnemyDefeated(enemy) {
-        GameState.run.encounterIndex++;
+        GameState.run.combatCount++;
         EventBus.emit("encounterCompleted", enemy);
         EventBus.emit("stateUpdated");
         
-        // A cada 3 encontros, jogador ganha uma Relíquia.
-        // Nos outros, spawna novo inimigo diretamente.
         setTimeout(() => {
             if (!GameState.run.isRunActive) return;
             
-            if (GameState.run.encounterIndex % 3 === 0) {
+            // Relíquias dropam a cada 3 Combates efetivos, independente do número do Nodo
+            if (GameState.run.combatCount % 3 === 0) {
                 RelicSystem.triggerRelicChoice();
-                // O spawn do próximo inimigo acontecerá após a escolha (ouvindo relicApplied)
+                // O loop retorna pelo listener de "relicApplied" abaixo
             } else {
-                this.spawnNextEncounter();
+                this.advanceNode();
             }
         }, 800);
     }
 };
 
+// Integrações do fluxo de EventBus para continuar a jornada
 EventBus.on("relicApplied", () => {
-    // Retoma o ciclo de spawn se foi interrompido por uma recompensa de Relíquia
     if(GameState.run.isRunActive && EnemySystem.getActiveEnemy()?.state === "DEFEATED") {
-        EncounterManager.spawnNextEncounter();
+        EncounterManager.advanceNode();
+    }
+});
+
+EventBus.on("eventResolved", () => {
+    if(GameState.run.isRunActive) {
+        setTimeout(() => EncounterManager.advanceNode(), 800);
+    }
+});
+
+EventBus.on("merchantClosed", () => {
+    if(GameState.run.isRunActive) {
+        setTimeout(() => EncounterManager.advanceNode(), 800);
     }
 });
