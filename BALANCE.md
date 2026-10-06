@@ -1,6 +1,9 @@
-# BALANCE (Estágio 3)
-## Encontros e Escalonamento
-- HP Scaling: `baseHP * Math.pow(1.15, level - 1)` (crescimento exponencial suave).
-- Break Scaling: `baseBreak * (1 + (level * 0.05))` (crescimento linear mais lento).
-- Break Multiplier: 1.5x Dano.
-- Break Duration: 3.0 Segundos (3000ms).
+# BALANCE (Estágio 4)
+
+## Obtenção de Relíquias
+- O jogador entra na Tela de Seleção de Relíquia (3 opções) toda vez que completa 3 Encontros (Level 3, 6, 9, etc.).
+
+## Escalabilidade dos Modificadores
+- Modificadores *Flat* (Soma) acumulam primeiro.
+- Modificadores *Multiplier* multiplicam sobre o total consolidado (Ex: Relíquia "Click Core" 1.1x aumenta globalmente).
+- Chance Crítica Máxima lógica é 1.0 (100%), mas o `DamageSystem` trata naturalmente (Math.random() < 1.0).
