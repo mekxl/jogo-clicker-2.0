@@ -195,14 +195,18 @@ class EncounterManager {
             this.currentEnemy = new Enemy(enemyId, data, this.run.difficultyTier);
         }
 
+        // Força o estado SPAWNING inicial
         this.currentEnemy.state = 'SPAWNING';
         this.ui.updateCombatHUD(this.currentEnemy, this.run);
         
+        // Aqui estava o bug principal. Vamos usar Arrow function garantindo o escopo
         setTimeout(() => {
             if(!this.run.isRunActive || !this.currentEnemy) return;
-            this.currentEnemy.state = 'ACTIVE';
+            
+            // Muda para ACTIVE e permite receber cliques!
+            this.currentEnemy.state = 'ACTIVE'; 
             this.ui.updateCombatHUD(this.currentEnemy, this.run);
-        }, 500);
+        }, 800); // Aumentei um pouco o tempo visual
     }
 
     onEnemyDefeated() {
@@ -222,12 +226,14 @@ class EncounterManager {
 
         this.run.encounterIndex++;
         
+        // Força a UI a atualizar logo após a morte
+        this.ui.updateHUD(this.run, SaveSystem.loadMeta());
+        
         setTimeout(() => {
             if(this.run.isRunActive) this.startEncounter();
-        }, 600);
+        }, 800);
     }
 }
-
 // ==========================================
 // ESTATÍSTICAS E UPGRADES
 // ==========================================
@@ -643,21 +649,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Controles HUD - Fixando o Click Target no Orb
     const coreOrb = document.getElementById('core-orb');
     
-    // Pointerdown é universal (Mouse, Touch, Pen) e contorna o atraso móvel de 300ms do click tradicional
-    coreOrb.addEventListener('pointerdown', (e) => {
-        // Pega as coordenadas exatas do ponteiro
+    // Usamos mousedown como padrão de desktop que é infalível aqui
+    coreOrb.addEventListener('mousedown', (e) => {
         clickSys.processPhysicalClick(e.clientX, e.clientY);
+    });
+    
+    // Tratamento nativo para touch screens
+    coreOrb.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Evita dar zoom/scroll duplo no mobile
+        // Pega as coordenadas do primeiro dedo tocando
+        const touch = e.touches[0];
+        clickSys.processPhysicalClick(touch.clientX, touch.clientY);
     });
     
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space' && runState.isRunActive && !runState.isPaused) {
             e.preventDefault();
-            
-            // Simula CSS Active via código
             coreOrb.style.transform = 'scale(0.92)';
             setTimeout(() => { coreOrb.style.transform = ''; }, 50);
             
-            // Pega centro do Orb
             const rect = coreOrb.getBoundingClientRect();
             clickSys.processPhysicalClick(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
@@ -667,20 +677,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if(runState.isRunActive && !runState.isPaused) runManager.endRun();
     });
 
-    document.getElementById('to-meta-button').addEventListener('click', () => {
-        const renderMeta = () => {
-            ui.showMetaScreen(metaState, (id, cost) => {
-                metaState.fragments -= cost;
-                metaState.upgrades[id]++;
-                SaveSystem.saveMeta(metaState);
-                renderMeta(); 
-            });
-        };
-        renderMeta();
+    // Função encapsulada de acessar META e comprar upgrades
+    const renderMeta = () => {
+        ui.showMetaScreen(metaState, (id, cost) => {
+            metaState.fragments -= cost;
+            metaState.upgrades[id]++;
+            SaveSystem.saveMeta(metaState);
+            renderMeta(); 
+        });
+    };
+
+    document.getElementById('to-meta-button').addEventListener('click', renderMeta);
+
+    // Quando o botão INICIAR RUN é clicado na tela META
+    document.getElementById('restart-button').addEventListener('click', () => {
+        runManager.startRun();
     });
 
-    document.getElementById('restart-button').addEventListener('click', () => runManager.startRun());
-
-    // Inicia a primeira vez na tela de Meta
-    document.getElementById('to-meta-button').click();
+    // Ao iniciar o jogo, joga o cara pra tela META pela primeira vez
+    renderMeta();
 });
