@@ -6,5 +6,16 @@ export const CurrencySystem = {
         if (!GameState.run.isRunActive) return;
         GameState.run.energy += amount;
         EventBus.emit("energyGained", GameState.run.energy);
+    },
+    
+    spendEnergy(amount) {
+        if (!GameState.run.isRunActive) return false;
+        if (GameState.run.energy >= amount) {
+            GameState.run.energy -= amount;
+            EventBus.emit("energySpent", GameState.run.energy);
+            EventBus.emit("stateUpdated");
+            return true;
+        }
+        return false;
     }
 };
