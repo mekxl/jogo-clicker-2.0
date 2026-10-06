@@ -3,7 +3,6 @@ import { UPGRADES, UPGRADE_RARITIES } from '../data/upgrades.js';
 import { EventBus } from '../core/EventBus.js';
 
 export const RewardSystem = {
-    // Milestones baseados em cliques totais na run
     milestones: [25, 75, 150, 250, 400, 600, 900, 1300, 2000],
 
     checkMilestones(currentClicks) {
@@ -15,8 +14,7 @@ export const RewardSystem = {
     },
 
     triggerUpgradeChoice() {
-        GameState.run.isPaused = true; // Previne exploits de clique
-
+        GameState.run.isPaused = true; 
         const choices = this.generateChoices(3);
         EventBus.emit("showUpgradeChoices", choices);
     },
@@ -33,8 +31,6 @@ export const RewardSystem = {
             if (validUpgrades.length === 0) continue;
             
             const randomUpg = validUpgrades[Math.floor(Math.random() * validUpgrades.length)];
-            
-            // Verifica limites de stack e duplicação na mesma escolha
             const currentStacks = GameState.run.activeUpgrades[randomUpg.id] || 0;
             const isAlreadyInChoices = choices.find(c => c.id === randomUpg.id);
 
@@ -43,7 +39,6 @@ export const RewardSystem = {
             }
         }
         
-        // Fallback caso falhe devido a limits
         while(choices.length < amount && UPGRADES[0]) {
              if(!choices.find(c => c.id === UPGRADES[0].id)) choices.push(UPGRADES[0]);
              else break;
@@ -53,13 +48,17 @@ export const RewardSystem = {
     },
 
     rollRarity() {
-        const luckMod = GameState.meta.metaUpgrades.luck * 0.05; // 5% a mais de peso pra raros+ por nv
+        // Luck bonus usa o Meta, mas agora é acrescido de Relics se existirem
+        const metaLuck = GameState.meta.metaUpgrades.luck * 0.05;
+        const runLuck = GameState.run.stats ? GameState.run.stats.luckBonus : 0;
+        const totalLuckMod = metaLuck + runLuck;
+
         let totalWeight = 0;
-        
         const weights = {};
+        
         for (let r in UPGRADE_RARITIES) {
             let w = UPGRADE_RARITIES[r].weight;
-            if(r !== "COMMON" && r !== "UNCOMMON") w += (w * luckMod); 
+            if(r !== "COMMON" && r !== "UNCOMMON") w += (w * totalLuckMod); 
             weights[r] = w;
             totalWeight += w;
         }
