@@ -42,7 +42,7 @@ const ENEMY_DB = {
 };
 
 // ==========================================
-// STATES
+// STATES E SAVE
 // ==========================================
 class MetaState {
     constructor() {
@@ -55,8 +55,6 @@ class RunState {
     constructor() {
         this.isRunActive = false;
         this.isPaused = false;
-        
-        // Atributos de Combate & Economia
         this.energy = 0;
         this.totalClicks = 0;
         this.currentCombo = 0;
@@ -64,19 +62,9 @@ class RunState {
         this.milestoneIndex = 0;
         this.runUpgrades = {};
         this.pendingFragments = 0; 
-        
-        // Progressão da Run
         this.difficultyTier = 1;
         this.encounterIndex = 0;
-        
-        // Estatísticas para Fim de Run
-        this.stats = {
-            totalDamage: 0,
-            highestDamageHit: 0,
-            enemiesDefeated: 0,
-            bossesDefeated: 0,
-            totalBreaks: 0
-        };
+        this.stats = { totalDamage: 0, highestDamageHit: 0, enemiesDefeated: 0, bossesDefeated: 0, totalBreaks: 0 };
     }
 }
 
@@ -97,7 +85,7 @@ class SaveSystem {
 }
 
 // ==========================================
-// SISTEMA DE COMBATE E INIMIGOS
+// SISTEMA DE COMBATE
 // ==========================================
 class Enemy {
     constructor(id, data, tier) {
@@ -115,15 +103,13 @@ class Enemy {
         this.baseReward = Math.floor(data.reward * (1 + ((tier - 1) * 0.5)));
         this.energyReward = data.energy;
         
-        this.state = 'ACTIVE'; // SPAWNING, ACTIVE, BREAKING, DEFEATED
+        this.state = 'ACTIVE'; 
         this.breakTimeoutId = null;
     }
 
     onHit(runState, clickSystem) {
         if(this.state === 'DEFEATED') return;
-        if (this.id === 'parasita' && Math.random() < 0.1) {
-            clickSystem.combo.breakCombo();
-        }
+        if (this.id === 'parasita' && Math.random() < 0.1) clickSystem.combo.breakCombo();
     }
 
     takeBreakDamage(amount, runState) {
@@ -243,7 +229,7 @@ class EncounterManager {
 }
 
 // ==========================================
-// SISTEMA DE STATUS E UPGRADES
+// ESTATÍSTICAS E UPGRADES
 // ==========================================
 class StatSystem {
     static getEffectiveStats(run, meta) {
@@ -280,16 +266,13 @@ class StatSystem {
         stats.tripleClickChance += level('onipresenca') * 0.20;
 
         if (level('anomalia') > 0) stats.comboCritSynergy = true;
-
         if (level('recarga_cinetica') > 0) stats.damageMult += (Math.floor(run.energy / 100) * 0.01) * level('recarga_cinetica');
         if (level('combo_visceral') > 0) stats.damageMult += Math.floor(run.currentCombo / 10) * 0.01 * level('combo_visceral');
         
-        // Multiplicador do Combo Base
         let comboBaseMult = 1;
         if (run.currentCombo >= 50) comboBaseMult = 4;
         else if (run.currentCombo >= 25) comboBaseMult = 3;
         else if (run.currentCombo >= 10) comboBaseMult = 2;
-        
         stats.damageMult *= comboBaseMult;
 
         return stats;
@@ -305,7 +288,6 @@ class UpgradeSystem {
 
     triggerMilestoneSelection() {
         this.run.isPaused = true;
-        
         let availablePool = UPGRADE_DB.filter(up => {
             const currentLevel = this.run.runUpgrades[up.id] || 0;
             return currentLevel < up.maxStacks;
@@ -314,7 +296,6 @@ class UpgradeSystem {
         const choices = [];
         for(let i=0; i<3; i++) {
             if(availablePool.length === 0) break;
-            
             const rarity = this.rollRarity();
             let poolByRarity = availablePool.filter(up => up.rarity === rarity);
             if(poolByRarity.length === 0) poolByRarity = availablePool; 
@@ -359,7 +340,7 @@ class UpgradeSystem {
 }
 
 // ==========================================
-// CORE LOGIC SYSTEMS (Click e Combo)
+// CORE LOGIC E CLICK
 // ==========================================
 class ComboSystem {
     constructor(runState, uiManager) {
@@ -427,14 +408,12 @@ class ClickSystem {
 
         this.run.totalClicks++;
         
-        let finalMult = stats.damageMult;
+        // Randomiza cores do Núcleo 3D
+        this.ui.randomizeCoreColors();
         
-        // Multiplicadores Dinâmicos de Condição de HP
+        let finalMult = stats.damageMult;
         const levelRuptura = this.run.runUpgrades['ruptura'] || 0;
-        if (levelRuptura > 0 && (enemy.currentHP / enemy.maxHP) < 0.3) {
-            finalMult += 1.0 * levelRuptura;
-        }
-
+        if (levelRuptura > 0 && (enemy.currentHP / enemy.maxHP) < 0.3) finalMult += 1.0 * levelRuptura;
         if (enemy.state === 'BREAKING') finalMult *= 2; 
 
         let finalDmg = stats.baseDamage * finalMult;
@@ -448,7 +427,6 @@ class ClickSystem {
         enemy.onHit(this.run, this);
 
         const died = enemy.takeDamage(finalDmg);
-        
         const breakDamage = 15; 
         if (!died) enemy.takeBreakDamage(breakDamage, this.run);
 
@@ -458,15 +436,10 @@ class ClickSystem {
         const offset = isEcho ? 30 : 0; 
         this.ui.spawnFloatingNumber(finalDmg, x + offset, y + offset, isCrit);
 
-        if (died) {
-            this.encounter.onEnemyDefeated();
-        }
+        if (died) this.encounter.onEnemyDefeated();
     }
 }
 
-// ==========================================
-// RUN MANAGER (Fluxo Central)
-// ==========================================
 class RunManager {
     constructor(runState, metaState, uiManager, encounterManager) {
         this.run = runState;
@@ -491,19 +464,14 @@ class RunManager {
         
         this.ui.hideModals();
         this.ui.updateHUD(this.run, this.meta);
-        
-        // Inicia o primeiro combate!
         this.encounter.startEncounter();
     }
 
     endRun() {
         this.run.isRunActive = false;
         this.run.isPaused = true;
-        
-        // Aplica fragmentos pendentes ao banco meta
         this.meta.fragments += this.run.pendingFragments;
         SaveSystem.saveMeta(this.meta);
-
         this.ui.showGameOver(this.run);
     }
 }
@@ -520,37 +488,48 @@ class UIManager {
             damage: document.getElementById('ui-damage'),
             clicks: document.getElementById('ui-clicks'),
             fragments: document.getElementById('ui-fragments'),
-            coreContainer: document.getElementById('core-container')
+            coreContainer: document.getElementById('core-container'),
+            coreOrb: document.getElementById('core-orb')
         };
+    }
+    
+    // Motor Gráfico do Orb
+    randomizeCoreColors() {
+        const root = document.documentElement;
+        // Gera valores RGB mais quentes para não fugir da identidade
+        const r = Math.floor(Math.random() * 155) + 100;
+        const g = Math.floor(Math.random() * 100);
+        const b = Math.floor(Math.random() * 150) + 50;
+        
+        // Define três camadas do gradiente variando saturação e brilho
+        root.style.setProperty('--orb-color-1', `rgb(${r}, ${g}, ${b})`);
+        root.style.setProperty('--orb-color-2', `rgb(${r-50}, ${Math.max(0, g-30)}, ${Math.max(0, b-50)})`);
+        root.style.setProperty('--orb-color-3', `rgb(${Math.max(0, r-100)}, 0, 0)`);
     }
 
     updateHUD(run, meta) {
         if(!meta) return;
         const stats = StatSystem.getEffectiveStats(run, meta);
-        
         document.getElementById('ui-stage').innerText = `${run.difficultyTier}-${(run.encounterIndex % ENCOUNTER_SEQUENCE.length) + 1}`;
         this.els.energy.innerText = run.energy;
         this.els.combo.innerText = run.currentCombo;
         this.els.clicks.innerText = run.totalClicks;
         this.els.fragments.innerText = meta.fragments + run.pendingFragments;
-        
         this.els.damage.innerText = Math.floor(stats.baseDamage * stats.damageMult); 
         this.els.comboMult.innerText = (stats.damageMult).toFixed(1);
     }
 
     updateCombatHUD(enemy, run) {
         if(!enemy) return;
-        
         document.getElementById('enemy-name').innerText = enemy.name;
         document.getElementById('ui-hp').innerText = enemy.currentHP > 1000 ? (enemy.currentHP/1000).toFixed(1)+'k' : enemy.currentHP;
         document.getElementById('ui-max-hp').innerText = enemy.maxHP > 1000 ? (enemy.maxHP/1000).toFixed(1)+'k' : enemy.maxHP;
         document.getElementById('hp-bar-fill').style.width = `${Math.max(0, (enemy.currentHP / enemy.maxHP) * 100)}%`;
-
         document.getElementById('ui-break').innerText = enemy.breakCurrent;
         document.getElementById('ui-max-break').innerText = enemy.breakMax;
         document.getElementById('break-bar-fill').style.width = `${Math.max(0, (enemy.breakCurrent / enemy.breakMax) * 100)}%`;
 
-        const btn = document.getElementById('core-button');
+        const btn = document.getElementById('core-orb'); // Usando orb
         const breakStatus = document.getElementById('break-status');
         const bossPhase = document.getElementById('boss-phase-container');
 
@@ -570,7 +549,7 @@ class UIManager {
         } else {
             btn.classList.remove('core-boss');
             bossPhase.classList.add('hidden');
-            btn.style.animation = '';
+            btn.style.animation = 'orbPulse 3s ease-in-out infinite alternate'; // Retorna animação padrao
         }
     }
 
@@ -583,7 +562,6 @@ class UIManager {
             amount = amount + "!";
         }
         floatEl.innerText = `-${amount}`;
-        
         floatEl.style.left = `${x + (Math.random() - 0.5) * 40}px`;
         floatEl.style.top = `${y + (Math.random() - 0.5) * 40}px`;
 
@@ -591,14 +569,11 @@ class UIManager {
         floatEl.addEventListener('animationend', () => floatEl.remove());
     }
 
-    hideModals() {
-        document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
-    }
+    hideModals() { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
 
     showUpgradeSelection(choices, onSelectCallback) {
         const container = document.getElementById('upgrade-cards-container');
         container.innerHTML = '';
-        
         choices.forEach(up => {
             const card = document.createElement('div');
             card.className = `upgrade-card ${up.rarity}`;
@@ -627,7 +602,6 @@ class UIManager {
     showMetaScreen(metaState, buyCallback) {
         this.hideModals();
         document.getElementById('meta-fragments-display').innerText = metaState.fragments;
-        
         const container = document.getElementById('meta-upgrades-container');
         container.innerHTML = '';
 
@@ -645,19 +619,15 @@ class UIManager {
                 </div>
                 <button class="meta-btn" ${canAfford ? '' : 'disabled'}>Custa: ${cost}</button>
             `;
-            
-            if(canAfford) {
-                div.querySelector('button').onclick = () => buyCallback(up.id, cost);
-            }
+            if(canAfford) div.querySelector('button').onclick = () => buyCallback(up.id, cost);
             container.appendChild(div);
         });
-
         document.getElementById('meta-modal').classList.remove('hidden');
     }
 }
 
 // ==========================================
-// BOOTSTRAP / INICIALIZAÇÃO
+// INICIALIZAÇÃO
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const metaState = SaveSystem.loadMeta();
@@ -668,22 +638,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const upgradeSys = new UpgradeSystem(runState, metaState, ui);
     const encounterManager = new EncounterManager(runState, ui);
     const runManager = new RunManager(runState, metaState, ui, encounterManager);
-    
-    // Injeção de todos os sistemas centralizados para o processador de cliques
     const clickSys = new ClickSystem(runState, metaState, upgradeSys, comboSys, ui, encounterManager);
 
-    // Controles HUD
-    const coreBtn = document.getElementById('core-button');
-    coreBtn.addEventListener('mousedown', (e) => clickSys.processPhysicalClick(e.clientX, e.clientY));
+    // Controles HUD - Fixando o Click Target no Orb
+    const coreOrb = document.getElementById('core-orb');
+    
+    // Pointerdown é universal (Mouse, Touch, Pen) e contorna o atraso móvel de 300ms do click tradicional
+    coreOrb.addEventListener('pointerdown', (e) => {
+        // Pega as coordenadas exatas do ponteiro
+        clickSys.processPhysicalClick(e.clientX, e.clientY);
+    });
     
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space' && runState.isRunActive && !runState.isPaused) {
             e.preventDefault();
-            coreBtn.style.transform = 'scale(0.95)';
-            coreBtn.style.backgroundColor = 'rgba(255, 42, 75, 0.2)';
-            setTimeout(() => { coreBtn.style.transform = ''; coreBtn.style.backgroundColor = 'transparent'; }, 50);
             
-            const rect = coreBtn.getBoundingClientRect();
+            // Simula CSS Active via código
+            coreOrb.style.transform = 'scale(0.92)';
+            setTimeout(() => { coreOrb.style.transform = ''; }, 50);
+            
+            // Pega centro do Orb
+            const rect = coreOrb.getBoundingClientRect();
             clickSys.processPhysicalClick(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
     });
