@@ -1,9 +1,13 @@
 :root {
     --bg-color: #08080a;
-    --core-color: #ff2a4b;
     --text-main: #e0e0e0;
     --hp-bar-bg: #1a1a1a;
     --meta-color: #00e5ff;
+    
+    /* Variáveis do núcleo 3D (atualizadas via JS) */
+    --orb-color-1: #ff2a4b;
+    --orb-color-2: #800020;
+    --orb-color-3: #2b000a;
     
     /* Raridades */
     --rarity-common: #888888;
@@ -32,33 +36,85 @@ body, html { margin: 0; padding: 0; background-color: var(--bg-color); color: va
 .hp-bg { background-color: var(--hp-bar-bg); }
 .break-bg { background-color: #0d2b36; border-color: #1b5e20; height: 12px;}
 
-#hp-bar-fill { height: 100%; width: 100%; background-color: var(--core-color); transition: width 0.05s linear; }
+#hp-bar-fill { height: 100%; width: 100%; background-color: var(--orb-color-1); transition: width 0.05s linear; }
 #break-bar-fill { height: 100%; width: 100%; background-color: #00e5ff; transition: width 0.05s linear; }
 
 .bar-label { position: absolute; top: -2px; left: 0; width: 100%; text-align: center; font-size: 11px; font-weight: bold; text-shadow: 1px 1px 0 #000; pointer-events: none; }
 .alert-text { color: #00e5ff; font-weight: bold; text-shadow: 0 0 10px #00e5ff; margin-top: 5px; animation: flashWarning 0.5s infinite alternate; }
 
-/* Núcleo de Clique */
-#core-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; position: relative; width: 100%; }
-#core-button { width: 150px; height: 150px; background-color: transparent; border: 4px solid var(--core-color); border-radius: 50%; cursor: pointer; outline: none; box-shadow: 0 0 20px var(--core-color), inset 0 0 20px var(--core-color); transition: transform 0.05s; }
-#core-button:active { transform: scale(0.95); background-color: rgba(255, 42, 75, 0.2); }
+/* --- ÁREA DO NÚCLEO --- */
+#core-container { 
+    flex-grow: 1; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    position: relative; 
+    width: 100%; 
+    cursor: crosshair;
+}
 
-/* Estados Visuais do Core */
-.core-breaking { border-color: #00e5ff !important; box-shadow: 0 0 40px #00e5ff, inset 0 0 40px #00e5ff !important; animation: shake 0.2s infinite; }
-.core-boss { border-style: dashed !important; border-color: #ff9800 !important; box-shadow: 0 0 30px #ff9800, inset 0 0 30px #ff9800 !important; }
+/* --- ORB 3D CORE --- */
+#core-orb { 
+    width: 200px; 
+    height: 200px; 
+    border-radius: 50%;
+    cursor: pointer;
+    background: radial-gradient(circle at 30% 30%, 
+                var(--orb-color-1) 0%, 
+                var(--orb-color-2) 50%, 
+                var(--orb-color-3) 90%, 
+                #000000 100%);
+    box-shadow: 
+        inset -20px -20px 40px rgba(0,0,0,0.8),
+        inset 10px 10px 30px rgba(255,255,255,0.4),
+        0 0 40px var(--orb-color-1);
+    
+    /* Efeito de pulsação base */
+    animation: orbPulse 3s ease-in-out infinite alternate;
+    transition: transform 0.05s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* Impede seleção de texto ao clicar rapidamente */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#core-orb:active { 
+    transform: scale(0.92); 
+    box-shadow: 
+        inset -10px -10px 20px rgba(0,0,0,0.8),
+        inset 5px 5px 15px rgba(255,255,255,0.4),
+        0 0 20px var(--orb-color-1);
+}
+
+/* Estados Visuais do Core Orb */
+.core-breaking { 
+    border: 2px solid #00e5ff;
+    box-shadow: 0 0 60px #00e5ff, inset 0 0 60px #00e5ff !important; 
+    animation: shake 0.2s infinite; 
+}
+.core-boss { 
+    border: 3px dashed #ff9800;
+    box-shadow: 0 0 50px #ff9800, inset 0 0 50px #ff9800 !important; 
+}
 
 /* Animações e Feedbacks */
-.floating-number { position: absolute; color: #fff; font-weight: bold; font-size: 20px; pointer-events: none; text-shadow: 0px 0px 5px var(--core-color); animation: floatUp 0.6s ease-out forwards; }
+.floating-number { position: absolute; color: #fff; font-weight: bold; font-size: 20px; pointer-events: none; text-shadow: 0px 0px 5px var(--orb-color-1); animation: floatUp 0.6s ease-out forwards; }
 @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-50px) scale(1.5); opacity: 0; } }
 @keyframes flashWarning { 0% { opacity: 1; } 100% { opacity: 0.3; } }
 @keyframes pulsePhase { 0% { text-shadow: 0 0 5px #ffeb3b; } 100% { text-shadow: 0 0 20px #ffeb3b; color: #fff; } }
 @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 50% { transform: translate(-1px, -2px) rotate(-1deg); } 100% { transform: translate(-2px, 1px) rotate(1deg); } }
 @keyframes bossSpawn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes orbPulse {
+    0% { filter: drop-shadow(0 0 20px var(--orb-color-1)); transform: scale(1); }
+    100% { filter: drop-shadow(0 0 40px var(--orb-color-2)); transform: scale(1.05); }
+}
 
 /* Botões UI */
 .action-btn, .danger-btn { margin-top: 20px; padding: 12px 24px; color: #fff; border: none; font-weight: bold; cursor: pointer; font-family: inherit; text-transform: uppercase; }
 .action-btn { background-color: var(--meta-color); color: #000; box-shadow: 0 0 10px var(--meta-color); }
-.danger-btn { background-color: transparent; border: 1px solid var(--core-color); color: var(--core-color); position: absolute; bottom: 20px; z-index: 10; }
+.danger-btn { background-color: transparent; border: 1px solid var(--orb-color-1); color: var(--orb-color-1); position: absolute; bottom: 20px; z-index: 10; }
 .danger-btn:hover { background-color: rgba(255,42,75,0.2); }
 
 /* Modais */
