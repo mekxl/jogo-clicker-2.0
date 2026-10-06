@@ -2,8 +2,11 @@ import { EventBus } from '../core/EventBus.js';
 import { GameState } from '../core/GameState.js';
 import { NumberSystem } from '../core/NumberSystem.js';
 import { UpgradeSystem } from '../progression/UpgradeSystem.js';
+import { RelicSystem } from '../progression/RelicSystem.js';
 import { MetaProgression } from '../progression/MetaProgression.js';
 import { UPGRADE_RARITIES } from '../data/upgrades.js';
+import { EnemySystem } from '../combat/EnemySystem.js';
+import { RELICS, SYNERGIES } from '../data/relics.js';
 
 export const UIManager = {
     init() {
@@ -15,14 +18,19 @@ export const UIManager = {
             dmg: document.getElementById('ui-dmg'),
             clicks: document.getElementById('ui-clicks'),
             fov: document.getElementById('ui-fov'),
+            encounter: document.getElementById('ui-encounter'),
+            enemyName: document.getElementById('ui-enemy-name'),
+            break: document.getElementById('ui-break'),
+            
             gameOverScreen: document.getElementById('game-over-screen'),
             upgradeModal: document.getElementById('upgrade-modal'),
+            modalTitle: document.getElementById('modal-title'),
             upgradeContainer: document.getElementById('upgrade-choices-container'),
             metaModal: document.getElementById('meta-modal'),
             metaContainer: document.getElementById('meta-upgrades-container'),
-            this.els.encounter = document.getElementById('ui-encounter'),
-            this.els.enemyName = document.getElementById('ui-enemy-name'),
-            this.els.break = document.getElementById('ui-break'),
+            
+            relicsList: document.getElementById('relics-list'),
+            synergiesList: document.getElementById('synergies-list'),
             
             endClicks: document.getElementById('end-clicks'),
             endDmg: document.getElementById('end-dmg'),
@@ -34,8 +42,14 @@ export const UIManager = {
         EventBus.on("stateUpdated", () => this.updateAll());
         EventBus.on("metaUpdated", () => this.updateMetaUI());
         
-        EventBus.on("showUpgradeChoices", (choices) => this.showUpgradeScreen(choices));
+        EventBus.on("showUpgradeChoices", (choices) => this.showCardScreen(choices, "SELECT UPGRADE", false));
         EventBus.on("upgradeApplied", () => this.els.upgradeModal.classList.add('hidden'));
+        
+        EventBus.on("renderRelicChoices", (choices) => this.showCardScreen(choices, "RELIC DISCOVERED", true));
+        EventBus.on("relicApplied", () => {
+            this.els.upgradeModal.classList.add('hidden');
+            this.updateRelicsPanel();
+        });
 
         document.getElementById('btn-open-meta').addEventListener('click', () => {
             this.updateMetaUI();
@@ -44,6 +58,9 @@ export const UIManager = {
         document.getElementById('btn-close-meta').addEventListener('click', () => {
             this.els.metaModal.classList.add('hidden');
         });
+        
+        // Inicializa limpo
+        this.updateRelicsPanel();
     },
 
     updateAll() {
@@ -57,57 +74,87 @@ export const UIManager = {
             this.els.enemyName.innerText = enemy.name;
             this.els.enemyName.style.color = enemy.color;
             this.els.hp.innerText = `${fn(enemy.currentHP)}/${fn(enemy.maxHP)}`;
-
+            
             if(enemy.state === "BREAKING") {
                 this.els.break.innerText = "VULNERABLE!";
-                } else {
+            } else {
                 this.els.break.innerText = `${fn(enemy.breakCurrent)}/${fn(enemy.breakMax)}`;
             }
         }
 
-        this.els.hp.innerText = `${fn(r.currentHP)}/${fn(r.maxHP)}`;
         this.els.energy.innerText = fn(r.energy);
         this.els.combo.innerText = fn(r.currentCombo);
         this.els.multiplier.innerText = fn(r.comboMultiplier);
-        
-        // Agora mostra o dano BASE (antes de crits/combo dinâmico) para referência
         this.els.dmg.innerText = fn(r.stats.damagePerClick); 
         this.els.clicks.innerText = fn(r.totalClicks);
         this.els.fov.innerText = fn(GameState.meta.fragmentsOfVoid);
     },
 
-    showUpgradeScreen(choices) {
+    showCardScreen(choices, titleText, isRelic) {
+        this.els.modalTitle.innerText = titleText;
         this.els.upgradeContainer.innerHTML = '';
-        choices.forEach(upg => {
-            const rarityInfo = UPGRADE_RARITIES[upg.rarity];
+        
+        choices.forEach(item => {
+            const rarityInfo = UPGRADE_RARITIES[item.rarity];
             const card = document.createElement('div');
             card.className = 'card';
             card.style.borderColor = rarityInfo.color;
             
+            let extraInfo = isRelic ? (item.unique ? "UNIQUE" : `Max Stacks: ${item.stackLimit}`) : "";
+            let tagsHtml = item.tags ? `<div class="tags">${item.tags.join(' ')}</div>` : "";
+
             card.innerHTML = `
-                <h3 style="color: ${rarityInfo.color}">${upg.name}</h3>
-                <div class="rarity" style="color: ${rarityInfo.color}">${upg.rarity}</div>
-                <div class="desc">${upg.description}</div>
-                <div class="tags">${upg.tags.join(' ')}</div>
+                <h3 style="color: ${rarityInfo.color}">${item.name}</h3>
+                <div class="rarity" style="color: ${rarityInfo.color}">${item.rarity}</div>
+                <div class="desc">${item.description}</div>
+                <div style="font-size: 0.7rem; color:#888; margin-bottom: 5px;">${extraInfo}</div>
+                ${tagsHtml}
             `;
             
             card.addEventListener('click', () => {
-                UpgradeSystem.selectUpgrade(upg.id);
+                if(isRelic) RelicSystem.addRelic(item.id);
+                else UpgradeSystem.selectUpgrade(item.id);
             });
             this.els.upgradeContainer.appendChild(card);
         });
         this.els.upgradeModal.classList.remove('hidden');
     },
 
+    updateRelicsPanel() {
+        this.els.relicsList.innerHTML = '';
+        const r = GameState.run;
+        
+        for (const [id, stacks] of Object.entries(r.activeRelics || {})) {
+            const relic = RELICS.find(x => x.id === id);
+            if (!relic) continue;
+            
+            const div = document.createElement('div');
+            div.className = `relic-item ${relic.rarity.toLowerCase()}`;
+            div.innerHTML = `
+                <div class="relic-title">${relic.name} ${stacks > 1 ? `x${stacks}` : ''}</div>
+                <div class="relic-tags">${relic.tags.join(', ')}</div>
+            `;
+            this.els.relicsList.appendChild(div);
+        }
+
+        this.els.synergiesList.innerHTML = '';
+        for (const synId of (r.activeSynergies || [])) {
+            const syn = SYNERGIES.find(s => s.id === synId);
+            if (!syn) continue;
+            const div = document.createElement('div');
+            div.className = 'syn-item';
+            div.innerText = syn.name;
+            this.els.synergiesList.appendChild(div);
+        }
+    },
+
     updateMetaUI() {
         this.els.fov.innerText = NumberSystem.formatNumber(GameState.meta.fragmentsOfVoid);
         this.els.metaContainer.innerHTML = '';
-        
         for (const [id, upgData] of Object.entries(MetaProgression.upgrades)) {
             const lvl = GameState.meta.metaUpgrades[id];
             const cost = MetaProgression.getCost(id);
             const canAfford = GameState.meta.fragmentsOfVoid >= cost && lvl < upgData.maxLvl;
-            
             const div = document.createElement('div');
             div.className = 'meta-item';
             div.innerHTML = `
@@ -117,10 +164,7 @@ export const UIManager = {
                 </div>
                 <button ${!canAfford ? 'disabled' : ''}>UPGRADE</button>
             `;
-            
-            const btn = div.querySelector('button');
-            btn.addEventListener('click', () => MetaProgression.buyUpgrade(id));
-            
+            div.querySelector('button').addEventListener('click', () => MetaProgression.buyUpgrade(id));
             this.els.metaContainer.appendChild(div);
         }
     },
@@ -130,12 +174,12 @@ export const UIManager = {
         this.els.endClicks.innerText = fn(data.runState.totalClicks);
         this.els.endDmg.innerText = fn(data.runState.totalDamage);
         this.els.endFov.innerText = fn(data.fovGained);
-        
-        this.updateMetaUI(); // Atualiza FoV no topo
+        this.updateMetaUI(); 
         this.els.gameOverScreen.classList.remove('hidden');
     },
 
     hideGameOver() {
         this.els.gameOverScreen.classList.add('hidden');
+        this.updateRelicsPanel(); // Limpa na nova run
     }
 };
