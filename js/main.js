@@ -3,21 +3,17 @@ import { RunManager } from './core/RunManager.js';
 import { DamageSystem } from './combat/DamageSystem.js';
 import { FeedbackSystem } from './feedback/FeedbackSystem.js';
 import { UIManager } from './ui/UIManager.js';
-
-// Inicialização das cascas de visual/UI
-FeedbackSystem.init();
 import { UpgradeSystem } from './progression/UpgradeSystem.js';
-// ... outros imports
-UpgradeSystem.init(); // Adicione logo após o FeedbackSystem.init()
-UIManager.init();
+import { RelicSystem } from './progression/RelicSystem.js'; // NOVO
 
-// Carrega persistência inicial (se houver)
+FeedbackSystem.init();
+UIManager.init();
+UpgradeSystem.init();
+
 SaveSystem.load();
 
-// Mapeamento de DOM Events para o Sistema Lógico
 const coreElement = document.getElementById('the-core');
 coreElement.addEventListener('pointerdown', (event) => {
-    // A UI não calcula nada. Apenas capta a intenção do jogador.
     DamageSystem.processClickDamage({
         x: event.clientX,
         y: event.clientY
@@ -29,10 +25,8 @@ restartBtn.addEventListener('click', () => {
     RunManager.restartRun();
 });
 
-// Salvar meta-progresso periodicamente (básico)
 window.addEventListener('beforeunload', () => {
     SaveSystem.save();
 });
 
-// Boot inicial
 RunManager.startRun();
