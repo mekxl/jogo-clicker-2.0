@@ -42,7 +42,7 @@ const ENEMY_DB = {
 };
 
 // ==========================================
-// STATES E SAVE
+// STATES E SAVE (Com Try/Catch de Segurança)
 // ==========================================
 class MetaState {
     constructor() {
@@ -70,15 +70,23 @@ class RunState {
 
 class SaveSystem {
     static saveMeta(metaState) {
-        localStorage.setItem('breakcore_meta', JSON.stringify(metaState));
+        try {
+            localStorage.setItem('breakcore_meta', JSON.stringify(metaState));
+        } catch(e) {
+            console.warn("Falha ao salvar. O LocalStorage pode estar bloqueado.", e);
+        }
     }
     static loadMeta() {
-        const saved = localStorage.getItem('breakcore_meta');
         const state = new MetaState();
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            state.fragments = parsed.fragments || 0;
-            state.upgrades = { ...state.upgrades, ...parsed.upgrades };
+        try {
+            const saved = localStorage.getItem('breakcore_meta');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                state.fragments = parsed.fragments || 0;
+                state.upgrades = { ...state.upgrades, ...parsed.upgrades };
+            }
+        } catch(e) {
+            console.warn("Falha ao carregar. Usando novo save.", e);
         }
         return state;
     }
@@ -96,12 +104,11 @@ class Enemy {
         const scaleMult = Math.pow(1.3, tier - 1);
         this.maxHP = Math.floor(data.hp * scaleMult);
         this.currentHP = this.maxHP;
-        
         this.breakMax = Math.floor(data.breakMax * scaleMult);
         this.breakCurrent = this.breakMax;
         
         this.baseReward = Math.floor(data.reward * (1 + ((tier - 1) * 0.5)));
-        this.energyReward = data.energy;
+        this.energyReward = data.energy || 1;
         
         this.state = 'ACTIVE'; 
         this.breakTimeoutId = null;
@@ -195,18 +202,14 @@ class EncounterManager {
             this.currentEnemy = new Enemy(enemyId, data, this.run.difficultyTier);
         }
 
-        // Força o estado SPAWNING inicial
         this.currentEnemy.state = 'SPAWNING';
         this.ui.updateCombatHUD(this.currentEnemy, this.run);
         
-        // Aqui estava o bug principal. Vamos usar Arrow function garantindo o escopo
         setTimeout(() => {
             if(!this.run.isRunActive || !this.currentEnemy) return;
-            
-            // Muda para ACTIVE e permite receber cliques!
-            this.currentEnemy.state = 'ACTIVE'; 
+            this.currentEnemy.state = 'ACTIVE';
             this.ui.updateCombatHUD(this.currentEnemy, this.run);
-        }, 800); // Aumentei um pouco o tempo visual
+        }, 800);
     }
 
     onEnemyDefeated() {
@@ -225,8 +228,6 @@ class EncounterManager {
         }
 
         this.run.encounterIndex++;
-        
-        // Força a UI a atualizar logo após a morte
         this.ui.updateHUD(this.run, SaveSystem.loadMeta());
         
         setTimeout(() => {
@@ -234,6 +235,7 @@ class EncounterManager {
         }, 800);
     }
 }
+
 // ==========================================
 // ESTATÍSTICAS E UPGRADES
 // ==========================================
@@ -258,14 +260,11 @@ class StatSystem {
         stats.baseDamage += level('mao_pesada') * 2;
         stats.baseDamage += level('sobrecarga') * 5;
         stats.damageMult += level('sedenta') * 0.25;
-        
         stats.energyPerClick += level('bateria_simples') * 1;
         stats.energyPerClick += level('reator') * 5;
-        
         stats.comboPerClick += level('reflexo_rapido') * 1;
         stats.comboTimeout += level('foco_estavel') * 200;
         stats.comboTimeout *= Math.pow(0.9, level('sobrecarga'));
-
         stats.critChance += level('precisao') * 0.05;
         stats.critDamage += level('ferocidade') * 0.30;
         stats.doubleClickChance += level('golpe_duplo') * 0.10;
@@ -338,7 +337,6 @@ class UpgradeSystem {
     acquireUpgrade(id) {
         if(!this.run.runUpgrades[id]) this.run.runUpgrades[id] = 0;
         this.run.runUpgrades[id]++;
-        
         this.run.isPaused = false;
         this.ui.hideUpgradeSelection();
         this.ui.updateHUD(this.run, this.meta);
@@ -358,7 +356,6 @@ class ComboSystem {
     registerCombo(stats, isCrit) {
         let gain = stats.comboPerClick;
         if (isCrit && stats.comboCritSynergy) gain *= 10;
-        
         this.run.currentCombo += gain;
         if (this.run.currentCombo > this.run.maxCombo) this.run.maxCombo = this.run.currentCombo;
         this.resetTimer(stats.comboTimeout);
@@ -390,7 +387,6 @@ class ClickSystem {
         if (!this.run.isRunActive || this.run.isPaused) return;
 
         const stats = StatSystem.getEffectiveStats(this.run, this.meta);
-        
         let clicksToProcess = 1;
         if (Math.random() < stats.tripleClickChance) clicksToProcess = 3;
         else if (Math.random() < stats.doubleClickChance) clicksToProcess = 2;
@@ -413,8 +409,6 @@ class ClickSystem {
         if (!enemy || enemy.state === 'DEFEATED' || enemy.state === 'SPAWNING') return;
 
         this.run.totalClicks++;
-        
-        // Randomiza cores do Núcleo 3D
         this.ui.randomizeCoreColors();
         
         let finalMult = stats.damageMult;
@@ -499,22 +493,19 @@ class UIManager {
         };
     }
     
-    // Motor Gráfico do Orb
     randomizeCoreColors() {
         const root = document.documentElement;
-        // Gera valores RGB mais quentes para não fugir da identidade
         const r = Math.floor(Math.random() * 155) + 100;
         const g = Math.floor(Math.random() * 100);
         const b = Math.floor(Math.random() * 150) + 50;
         
-        // Define três camadas do gradiente variando saturação e brilho
         root.style.setProperty('--orb-color-1', `rgb(${r}, ${g}, ${b})`);
         root.style.setProperty('--orb-color-2', `rgb(${r-50}, ${Math.max(0, g-30)}, ${Math.max(0, b-50)})`);
         root.style.setProperty('--orb-color-3', `rgb(${Math.max(0, r-100)}, 0, 0)`);
     }
 
     updateHUD(run, meta) {
-        if(!meta) return;
+        if(!meta || !run) return;
         const stats = StatSystem.getEffectiveStats(run, meta);
         document.getElementById('ui-stage').innerText = `${run.difficultyTier}-${(run.encounterIndex % ENCOUNTER_SEQUENCE.length) + 1}`;
         this.els.energy.innerText = run.energy;
@@ -535,7 +526,7 @@ class UIManager {
         document.getElementById('ui-max-break').innerText = enemy.breakMax;
         document.getElementById('break-bar-fill').style.width = `${Math.max(0, (enemy.breakCurrent / enemy.breakMax) * 100)}%`;
 
-        const btn = document.getElementById('core-orb'); // Usando orb
+        const btn = document.getElementById('core-orb'); 
         const breakStatus = document.getElementById('break-status');
         const bossPhase = document.getElementById('boss-phase-container');
 
@@ -550,12 +541,12 @@ class UIManager {
         if (enemy.isBoss) {
             btn.classList.add('core-boss');
             bossPhase.classList.remove('hidden');
-            document.getElementById('ui-boss-phase').innerText = enemy.phase;
+            document.getElementById('ui-boss-phase').innerText = enemy.phase || 1;
             if(enemy.state === 'SPAWNING') btn.style.animation = 'bossSpawn 0.5s ease-out';
         } else {
             btn.classList.remove('core-boss');
             bossPhase.classList.add('hidden');
-            btn.style.animation = 'orbPulse 3s ease-in-out infinite alternate'; // Retorna animação padrao
+            btn.style.animation = 'orbPulse 3s ease-in-out infinite alternate'; 
         }
     }
 
@@ -646,28 +637,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const runManager = new RunManager(runState, metaState, ui, encounterManager);
     const clickSys = new ClickSystem(runState, metaState, upgradeSys, comboSys, ui, encounterManager);
 
-    // Controles HUD - Fixando o Click Target no Orb
     const coreOrb = document.getElementById('core-orb');
     
-    // Usamos mousedown como padrão de desktop que é infalível aqui
-    coreOrb.addEventListener('mousedown', (e) => {
-        clickSys.processPhysicalClick(e.clientX, e.clientY);
-    });
-    
-    // Tratamento nativo para touch screens
-    coreOrb.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Evita dar zoom/scroll duplo no mobile
-        // Pega as coordenadas do primeiro dedo tocando
-        const touch = e.touches[0];
-        clickSys.processPhysicalClick(touch.clientX, touch.clientY);
-    });
+    // Suporte Universal a Cliques Rápidos
+    if (coreOrb) {
+        coreOrb.addEventListener('mousedown', (e) => {
+            if(e.button === 0) clickSys.processPhysicalClick(e.clientX, e.clientY);
+        });
+        
+        coreOrb.addEventListener('touchstart', (e) => {
+            e.preventDefault(); 
+            const touch = e.touches[0];
+            clickSys.processPhysicalClick(touch.clientX, touch.clientY);
+        }, { passive: false });
+    }
     
     window.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && runState.isRunActive && !runState.isPaused) {
+        if (e.code === 'Space' && runState.isRunActive && !runState.isPaused && coreOrb) {
             e.preventDefault();
             coreOrb.style.transform = 'scale(0.92)';
             setTimeout(() => { coreOrb.style.transform = ''; }, 50);
-            
             const rect = coreOrb.getBoundingClientRect();
             clickSys.processPhysicalClick(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
@@ -677,7 +666,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(runState.isRunActive && !runState.isPaused) runManager.endRun();
     });
 
-    // Função encapsulada de acessar META e comprar upgrades
     const renderMeta = () => {
         ui.showMetaScreen(metaState, (id, cost) => {
             metaState.fragments -= cost;
@@ -688,12 +676,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.getElementById('to-meta-button').addEventListener('click', renderMeta);
+    document.getElementById('restart-button').addEventListener('click', () => runManager.startRun());
 
-    // Quando o botão INICIAR RUN é clicado na tela META
-    document.getElementById('restart-button').addEventListener('click', () => {
-        runManager.startRun();
-    });
-
-    // Ao iniciar o jogo, joga o cara pra tela META pela primeira vez
+    // Se a inicialização for bem sucedida, lança a tela inicial META.
     renderMeta();
 });
