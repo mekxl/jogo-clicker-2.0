@@ -143,3 +143,23 @@ body {
 .meta-item button { background: #bb88ff; color: #000; border: none; padding: 5px 10px; cursor: pointer; font-weight: bold; }
 .meta-item button:disabled { background: #444; color: #222; cursor: not-allowed; }
 .run-summary { text-align: left; background: #111; padding: 20px; border: 1px solid #333; margin-bottom: 20px; }
+
+/* ... manter base anterior ... */
+.text-break { color: #00ccff; text-shadow: 0 0 5px rgba(0, 204, 255, 0.5); font-weight: bold; }
+.breaking-state { animation: breakPulse 0.5s infinite alternate !important; filter: hue-rotate(180deg) brightness(1.5); }
+.defeated-state { filter: grayscale(100%) opacity(0.3); transform: scale(0.8) !important; pointer-events: none;}
+
+@keyframes breakPulse {
+    0% { box-shadow: 0 0 20px #00ccff, inset 0 0 20px #000; }
+    100% { box-shadow: 0 0 60px #fff, inset 0 0 40px #00ccff; transform: scale(1.02); }
+}
+
+.floating-break-text {
+    position: absolute; color: #fff; font-size: 3rem; font-weight: 900; letter-spacing: 5px;
+    text-shadow: 0 0 20px #00ccff; animation: breakPop 1s ease-out forwards; pointer-events: none; z-index: 50;
+}
+@keyframes breakPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    20% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1.5) translateY(-50px); opacity: 0; }
+}
