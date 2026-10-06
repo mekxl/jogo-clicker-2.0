@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BREAK//CORE - ETAPA 3</title>
+    <title>BREAK//CORE - Jogo Completo</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,9 +18,9 @@
             <div class="stat-box meta-color">FRAGMENTOS: <span id="ui-fragments">0</span></div>
         </div>
 
-        <!-- HUD do Combate -->
+        <!-- HUD do Combate (Inimigo, HP, BREAK) -->
         <div id="combat-panel">
-            <h2 id="enemy-name" class="enemy-text">SINAL PERDIDO</h2>
+            <h2 id="enemy-name" class="enemy-text">INICIANDO SISTEMA...</h2>
             <div id="boss-phase-container" class="hidden">FASE <span id="ui-boss-phase">1</span></div>
             
             <div class="bar-wrapper">
@@ -47,13 +47,18 @@
         
         <button id="extract-button" class="danger-btn">EXTRAIR FRAGMENTOS (FIM DE RUN)</button>
 
-        <!-- Modais ocultos (Upgrades, Game Over, Meta) mantidos iguais à Etapa 2 -->
-        <!-- [MODAL UPGRADES] -->
+        <!-- OVERLAYS E MODAIS -->
+
+        <!-- Seleção de Upgrades (Run) -->
         <div id="upgrade-modal" class="modal hidden">
             <h2>MARCO ALCANÇADO</h2>
-            <div id="upgrade-cards-container" class="cards-container"></div>
+            <p>Selecione um aprimoramento estrutural:</p>
+            <div id="upgrade-cards-container" class="cards-container">
+                <!-- Cartas geradas via JS -->
+            </div>
         </div>
-        <!-- [MODAL GAME OVER] -->
+
+        <!-- Fim de Run / Resumo -->
         <div id="game-over-modal" class="modal hidden">
             <h2>RUN FINALIZADA</h2>
             <div id="run-summary" class="summary-box">
@@ -62,18 +67,22 @@
                 <p>Maior Dano Único: <span id="sum-high-dmg">0</span></p>
                 <p>Dano Total: <span id="sum-damage">0</span></p>
                 <p>Maior Combo: <span id="sum-combo">0</span></p>
-                <h3 class="meta-color">Fragmentos Obtidos: +<span id="sum-fragments">0</span></h3>
+                <h3 class="meta-color">Fragmentos Extraídos: +<span id="sum-fragments">0</span></h3>
             </div>
             <button id="to-meta-button" class="action-btn">ACESSAR NÚCLEO (META)</button>
         </div>
-        <!-- [MODAL META] -->
+
+        <!-- Meta Progressão -->
         <div id="meta-modal" class="modal hidden">
             <h2 class="meta-color">SISTEMA PERMANENTE</h2>
             <p>Fragmentos Disponíveis: <span id="meta-fragments-display" class="meta-color bold">0</span></p>
-            <div id="meta-upgrades-container" class="meta-container"></div>
+            <div id="meta-upgrades-container" class="meta-container">
+                <!-- Meta upgrades gerados via JS -->
+            </div>
             <button id="restart-button" class="action-btn">INICIAR NOVA RUN</button>
         </div>
     </div>
+
     <script src="game.js"></script>
 </body>
 </html>
