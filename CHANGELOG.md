@@ -1,13 +1,14 @@
 # Changelog
 
-## [Estágio 1] - Fundação do Jogo
+## [Estágio 4] - Relics e Sinergias
 ### Adicionado
-- Estrutura base de pastas baseada em ES Modules.
-- Estética CSS base do jogo (sombria, vermelha e tecnológica).
-- `GameState` com divisão clara entre estado Efêmero (Run) e Persistente (Meta).
-- `EventBus` para desacoplamento de classes.
-- `TargetSystem` e `DamageSystem` gerindo o cálculo de diminuição de HP a partir de um clique.
-- `CurrencySystem` com ganho fixo de +1 Energy por clique na Run ativa.
-- `ComboSystem` registrando cliques em sequência e atribuindo ranges de multiplicador numérico.
-- `FeedbackSystem` produzindo indicadores visuais flutuantes ("Floating Damage") sem engessar os cálculos de UI puro do `UIManager`.
-- Tela de encerramento da Run com interatividade de restart e reinicialização correta de estado.
+- `js/data/relics.js` contendo 50 relíquias e 10 sinergias pré-definidas.
+- `js/progression/RelicSystem.js` controlando as regras de aquisição (Uniques, limits e tags).
+- Sinergias Multi-Tags (Ex: RISK + LUCK gera "High Stakes").
+- Painel esquerdo na interface (`relics-sidebar`) documentando a Build da Run atual.
+- Drop de Relíquias amarrado ao `EncounterManager` (Uma escolha a cada 3 inimigos).
+
+### Modificado
+- `ModifierSystem.js`: Reescrito para comportar arrays de multi-efeitos e aplicar multiplicadores corretamente no final da pilha matemática.
+- `DamageSystem.js`: Agora extrai dinamicamente as variáveis de BREAK, CRIT e ENERGIA do pacote `stats` atualizado.
+- CSS Layout: Tela convertida para flex-row (`main-layout`) para comportar o painel sem achatar o CORE.
