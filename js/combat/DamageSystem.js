@@ -5,6 +5,7 @@ import { CurrencySystem } from '../progression/CurrencySystem.js';
 import { ComboSystem } from './ComboSystem.js';
 import { EventBus } from '../core/EventBus.js';
 import { RewardSystem } from '../progression/RewardSystem.js';
+import { ModifierSystem } from '../core/ModifierSystem.js';
 
 export const DamageSystem = {
     processClickDamage(clickEventData) {
@@ -13,6 +14,9 @@ export const DamageSystem = {
         const target = EnemySystem.getActiveEnemy();
         if (!target || (target.state !== "ACTIVE" && target.state !== "BREAKING")) return;
 
+        // É crucial recalcular status aqui se dependermos do combo crescendo a cada hit
+        ModifierSystem.recalculateStats();
+        
         GameState.run.totalClicks++;
         GameState.meta.totalClicks++;
 
@@ -22,32 +26,38 @@ export const DamageSystem = {
         const comboMult = 1 + ((GameState.run.comboMultiplier - 1) * stats.comboEffectiveness);
         finalDamage *= comboMult;
 
-        let isCrit = Math.random() < stats.critChance;
+        let critChance = stats.critChance;
+        if (target.state === "BREAKING" && stats.breakAutoCrit > 0) critChance = 1.0;
+
+        let isCrit = Math.random() < critChance;
         if (isCrit) finalDamage *= stats.critMultiplier;
 
         finalDamage *= stats.globalMultiplier;
 
-        // MULTIPLICADOR DE BREAK (Se o inimigo está vulnerável)
+        // MULTIPLICADOR DE BREAK
         if (target.state === "BREAKING") {
-            finalDamage *= BreakSystem.breakMultiplier;
+            finalDamage *= stats.breakMultiplier;
         }
 
         finalDamage = Math.floor(finalDamage);
         if (finalDamage < 1) finalDamage = 1;
 
-        // Aplica o Dano de HP (retorna true se matou)
         const isDefeated = EnemySystem.takeDamage(finalDamage);
         
-        // Aplica o Dano de BREAK (1 por clique na base)
-        BreakSystem.takeBreakDamage(1); 
+        // Dano de BREAK modular
+        BreakSystem.takeBreakDamage(stats.breakDamage); 
 
-        // Update Stats
         GameState.run.totalDamage += finalDamage;
         if (finalDamage > GameState.meta.highestDamageHit) {
             GameState.meta.highestDamageHit = finalDamage;
         }
 
-        CurrencySystem.addEnergy(stats.energyPerClick);
+        // Energia
+        let energyGain = stats.energyPerClick;
+        if (GameState.run.comboMultiplier > 1) energyGain += stats.comboEnergyBonus;
+        if (isCrit) energyGain += stats.critEnergyBonus;
+        CurrencySystem.addEnergy(energyGain);
+        
         ComboSystem.incrementCombo();
 
         EventBus.emit("damage", { 
@@ -61,7 +71,6 @@ export const DamageSystem = {
         RewardSystem.checkMilestones(GameState.run.totalClicks);
         EventBus.emit("stateUpdated");
 
-        // Gatilho único de morte
         if (isDefeated) {
             GameState.meta.enemiesDefeated++;
             GameState.run.enemiesDefeated = (GameState.run.enemiesDefeated || 0) + 1;
