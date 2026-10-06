@@ -4,7 +4,8 @@ import { DamageSystem } from './combat/DamageSystem.js';
 import { FeedbackSystem } from './feedback/FeedbackSystem.js';
 import { UIManager } from './ui/UIManager.js';
 import { UpgradeSystem } from './progression/UpgradeSystem.js';
-import { RelicSystem } from './progression/RelicSystem.js'; // NOVO
+import { RelicSystem } from './progression/RelicSystem.js'; 
+import { EventSystem } from './events/EventSystem.js'; // Garantindo carga da instância (mesmo que EventBus cuide do resto)
 
 FeedbackSystem.init();
 UIManager.init();
