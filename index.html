@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BREAK//CORE - v0.1</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="ui-layer">
+        <div id="header-stats">
+            <div class="stat-box">
+                <span class="stat-label">ENERGIA</span>
+                <span id="ui-energy" class="stat-value">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">CLIQUES</span>
+                <span id="ui-clicks" class="stat-value">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">DANO/CLQ</span>
+                <span id="ui-damage" class="stat-value">1</span>
+            </div>
+        </div>
+
+        <div id="combo-panel">
+            <div id="combo-text">COMBO: <span id="ui-combo">0</span></div>
+            <div id="ui-multiplier" class="multiplier">x1</div>
+        </div>
+    </div>
+
+    <div id="game-layer">
+        <div id="core-container">
+            <div id="core"></div>
+            
+            <div id="hp-container">
+                <div id="hp-bar-bg">
+                    <div id="hp-bar-fill"></div>
+                </div>
+                <div id="hp-text"><span id="ui-current-hp">100</span> / <span id="ui-max-hp">100</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="floating-layer"></div>
+
+    <div id="game-over-screen" class="hidden">
+        <div class="game-over-content">
+            <h2>ALVO DESTRUÍDO</h2>
+            <div class="run-stats">
+                <p>Cliques Totais: <span id="end-clicks">0</span></p>
+                <p>Combo Máximo: <span id="end-combo">0</span></p>
+            </div>
+            <button id="btn-restart">INICIAR NOVA RUN</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
