@@ -1,21 +1,19 @@
 import { GameState } from './GameState.js';
-import { TargetSystem } from '../combat/TargetSystem.js';
 import { ModifierSystem } from './ModifierSystem.js';
+import { EncounterManager } from '../combat/EncounterManager.js';
 import { EventBus } from './EventBus.js';
 import { SaveSystem } from './SaveSystem.js';
 
 export const RunManager = {
     startRun() {
         GameState.resetRunState();
-        ModifierSystem.recalculateStats(); // Aplica MetaUpgrades antes de começar
+        ModifierSystem.recalculateStats();
         
-        // Aplica energia reserva
         GameState.run.energy = GameState.meta.metaUpgrades.energyReserve * 10;
-        
         GameState.run.isRunActive = true;
         
-        // HP do Core AUMENTADO para permitir gameplay roguelite
-        TargetSystem.initTarget(1, "CORE NODE Alpha", 1000000); 
+        // Delega o ciclo inicial para o EncounterManager
+        EncounterManager.initRun();
         
         EventBus.emit("runStarted", GameState);
         EventBus.emit("stateUpdated");
@@ -25,15 +23,13 @@ export const RunManager = {
         if(!GameState.run.isRunActive) return;
         GameState.run.isRunActive = false;
 
-        // Calcula recompensas permanentes
         const stats = GameState.run.stats;
         let fovGained = Math.floor(GameState.run.totalDamage / 50) + Math.floor(GameState.run.totalClicks / 10);
         fovGained = Math.floor(fovGained * stats.fovBonus);
 
         GameState.meta.fragmentsOfVoid += fovGained;
         
-        SaveSystem.save(); // Salva o progresso no fim da run
-
+        SaveSystem.save();
         EventBus.emit("runEnded", { runState: GameState.run, fovGained });
     },
 
@@ -43,6 +39,7 @@ export const RunManager = {
     }
 };
 
-EventBus.on("targetDefeated", () => {
-    RunManager.endRun();
+// Integração de fluxo vital
+EventBus.on("enemyDefeated", (enemy) => {
+    EncounterManager.onEnemyDefeated(enemy);
 });
