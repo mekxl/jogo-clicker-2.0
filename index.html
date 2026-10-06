@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BREAK//CORE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- TOPO: Status e Informações -->
+        <header id="top-bar">
+            <div class="brand">BREAK//CORE</div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="label">TARGET HP</span>
+                    <span id="ui-hp" class="value">100 / 100</span>
+                </div>
+                <div class="stat-box energy">
+                    <span class="label">ENERGY</span>
+                    <span id="ui-energy" class="value">0</span>
+                </div>
+                <div class="stat-box combo">
+                    <span class="label">COMBO</span>
+                    <span id="ui-combo" class="value">0</span>
+                    <span id="ui-multiplier" class="multiplier">x1</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">DMG/CLICK</span>
+                    <span id="ui-damage" class="value">1</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">CLICKS</span>
+                    <span id="ui-clicks" class="value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- CENTRO: Área de Combate -->
+        <main id="combat-area">
+            <div id="core-wrapper">
+                <div id="core-element" role="button" tabindex="0">
+                    <div class="core-inner"></div>
+                </div>
+            </div>
+            <div id="floating-text-container"></div>
+            
+            <!-- Overlay de Fim de Jogo -->
+            <div id="game-over-overlay" class="hidden">
+                <h2>TARGET DEFEATED</h2>
+                <button id="btn-restart">PULSE AGAIN (Restart)</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Ponto de entrada dos módulos JavaScript -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
