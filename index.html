@@ -11,8 +11,16 @@
         <div class="logo">BREAK//CORE</div>
         <div class="stats-container">
             <div class="stat-box">
+                <span class="label">ENCOUNTER <span id="ui-encounter">1</span></span>
+                <span id="ui-enemy-name" class="value" style="font-size: 0.9rem; color: #fff;">Enemy Name</span>
+            </div>
+            <div class="stat-box">
                 <span class="label">TARGET HP</span>
                 <span id="ui-hp" class="value">0/0</span>
+            </div>
+            <div class="stat-box">
+                <span class="label">BREAK</span>
+                <span id="ui-break" class="value text-break">0/0</span>
             </div>
             <div class="stat-box">
                 <span class="label">ENERGY</span>
@@ -33,29 +41,30 @@
         </div>
     </header>
 
-    <main class="center-stage">
-        <div id="core-container">
-            <div id="the-core"></div>
-        </div>
-    </main>
-
-    <!-- Overlay para telas de fim de jogo -->
-    <div id="game-over-screen" class="overlay hidden">
-        <h1>TARGET DEFEATED</h1>
-        <p>A energia do núcleo foi dissipada.</p>
-        <button id="btn-restart">INICIAR NOVA RUN</button>
-    </div>
-
-    
-<!-- Top Bar modificada (Adicionar barra secundária) -->
     <div class="meta-bar">
         <span>FRAGMENTS OF VOID: <span id="ui-fov" class="text-fov">0</span></span>
         <button id="btn-open-meta" class="small-btn">META PROGRESSION</button>
     </div>
 
+    <!-- Container Flexível para Palco + Relíquias -->
+    <div class="main-layout">
+        <aside id="relics-panel" class="relics-sidebar">
+            <h3>ACTIVE RELICS</h3>
+            <div id="relics-list" class="relics-list"></div>
+            <h3 style="margin-top: 20px;">SYNERGIES</h3>
+            <div id="synergies-list" class="synergies-list"></div>
+        </aside>
+
+        <main class="center-stage">
+            <div id="core-container">
+                <div id="the-core"></div>
+            </div>
+        </main>
+    </div>
+
     <!-- Modals Overlay -->
     <div id="upgrade-modal" class="overlay hidden">
-        <h2>SELECT UPGRADE</h2>
+        <h2 id="modal-title">SELECT UPGRADE</h2>
         <div id="upgrade-choices-container" class="cards-container"></div>
     </div>
 
@@ -66,7 +75,6 @@
         <button id="btn-close-meta" class="close-btn">FECHAR</button>
     </div>
 
-    <!-- Tela de fim de run atualizada (já existe no seu HTML, modifique o conteúdo): -->
     <div id="game-over-screen" class="overlay hidden">
         <h1>RUN ENDED</h1>
         <div class="run-summary">
@@ -77,23 +85,6 @@
         <button id="btn-restart">INICIAR NOVA RUN</button>
     </div>
 
-    <!-- ... -->
-        <div class="stats-container">
-            <div class="stat-box">
-                <span class="label">ENCOUNTER <span id="ui-encounter">1</span></span>
-                <span id="ui-enemy-name" class="value" style="font-size: 0.9rem; color: #fff;">Enemy Name</span>
-            </div>
-            <div class="stat-box">
-                <span class="label">TARGET HP</span>
-                <span id="ui-hp" class="value">0/0</span>
-            </div>
-            <div class="stat-box">
-                <span class="label">BREAK</span>
-                <span id="ui-break" class="value text-break">0/0</span>
-            </div>
-            <!-- Mantenha Energy, Combo, etc... -->
-    
-    <!-- Ponto de entrada modular -->
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
