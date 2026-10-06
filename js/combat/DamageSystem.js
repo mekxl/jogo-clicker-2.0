@@ -3,43 +3,57 @@ import { TargetSystem } from './TargetSystem.js';
 import { CurrencySystem } from '../progression/CurrencySystem.js';
 import { ComboSystem } from './ComboSystem.js';
 import { EventBus } from '../core/EventBus.js';
+import { RewardSystem } from '../progression/RewardSystem.js';
 
 export const DamageSystem = {
     processClickDamage(clickEventData) {
-        if (!GameState.run.isRunActive) return;
+        if (!GameState.run.isRunActive || GameState.run.isPaused) return;
 
         const target = TargetSystem.getCurrentTarget();
         if (!target || target.state !== "ACTIVE") return;
 
-        // Registro do clique (Run e Meta)
         GameState.run.totalClicks++;
         GameState.meta.totalClicks++;
 
-        // Obter dano base e calcular (ainda sem modificadores aplicados na prática)
-        const baseDamage = GameState.run.damagePerClick;
-        const finalDamage = baseDamage; // Futuramente: baseDamage * GameState.run.comboMultiplier * buffs...
+        // Cálculo de Dano com Modificadores
+        const stats = GameState.run.stats;
+        let finalDamage = stats.damagePerClick;
+        
+        // Multiplicador de Combo modificado pelos upgrades
+        const comboMult = 1 + ((GameState.run.comboMultiplier - 1) * stats.comboEffectiveness);
+        finalDamage *= comboMult;
 
-        // Aplicar dano
+        // Crit
+        let isCrit = Math.random() < stats.critChance;
+        if (isCrit) {
+            finalDamage *= stats.critMultiplier;
+        }
+
+        finalDamage *= stats.globalMultiplier;
+        finalDamage = Math.floor(finalDamage);
+        if (finalDamage < 1) finalDamage = 1;
+
         const isDefeated = TargetSystem.takeDamage(finalDamage);
 
-        // Atualizar estatísticas numéricas
         GameState.run.totalDamage += finalDamage;
         if (finalDamage > GameState.meta.highestDamageHit) {
             GameState.meta.highestDamageHit = finalDamage;
         }
 
-        // Conceder Recursos e Processar Combo
-        CurrencySystem.addEnergy(1);
+        CurrencySystem.addEnergy(stats.energyPerClick);
         ComboSystem.incrementCombo();
 
-        // Emitir Eventos
         EventBus.emit("damage", { 
             amount: finalDamage, 
+            isCrit: isCrit,
             x: clickEventData.x, 
             y: clickEventData.y 
         });
         
-        EventBus.emit("stateUpdated"); // Força UI update
+        // Checagem de Milestones da Run
+        RewardSystem.checkMilestones(GameState.run.totalClicks);
+
+        EventBus.emit("stateUpdated");
 
         if (isDefeated) {
             GameState.meta.enemiesDefeated++;
