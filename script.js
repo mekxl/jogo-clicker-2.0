@@ -12,31 +12,37 @@ const META_DB = {
 
 const RARITY_WEIGHTS = { common: 100, uncommon: 50, rare: 20, epic: 5, legendary: 1 };
 
-// Definição dos 15 Upgrades de Run (Efeitos interpretados pelo StatSystem)
 const UPGRADE_DB = [
     { id: 'mao_pesada', name: 'Mão Pesada', desc: '+2 Dano Base', rarity: 'common', maxStacks: 10, tags: ['CLICK'] },
     { id: 'bateria_simples', name: 'Bateria Simples', desc: '+1 Energia/Clique', rarity: 'common', maxStacks: 10, tags: ['ENERGY'] },
     { id: 'reflexo_rapido', name: 'Reflexo Rápido', desc: '+1 Acúmulo de Combo/Clique', rarity: 'common', maxStacks: 5, tags: ['COMBO'] },
     { id: 'foco_estavel', name: 'Foco Estável', desc: '+200ms Duração de Combo', rarity: 'common', maxStacks: 5, tags: ['COMBO'] },
-    
     { id: 'sedenta', name: 'Sedenta', desc: '+25% Dano Final', rarity: 'uncommon', maxStacks: 10, tags: ['DAMAGE'] },
     { id: 'precisao', name: 'Precisão', desc: '+5% Chance Crítico (2x Dano)', rarity: 'uncommon', maxStacks: 10, tags: ['CRIT'] },
     { id: 'recarga_cinetica', name: 'Carga Cinética', desc: 'Energia aumenta multiplicador de dano (+1% / 100 EN)', rarity: 'uncommon', maxStacks: 5, tags: ['ENERGY', 'SYNERGY'] },
-    
     { id: 'sobrecarga', name: 'Sobrecarga', desc: '+5 Dano Base, -10% Duração Combo', rarity: 'rare', maxStacks: 5, tags: ['RISK', 'DAMAGE'] },
     { id: 'golpe_duplo', name: 'Golpe Duplo', desc: '10% Chance de duplo clique', rarity: 'rare', maxStacks: 5, tags: ['CLICK'] },
     { id: 'ferocidade', name: 'Ferocidade', desc: '+30% Dano Crítico', rarity: 'rare', maxStacks: 10, tags: ['CRIT'] },
-    
     { id: 'combo_visceral', name: 'Combo Visceral', desc: '+1% Dano para cada 10 de Combo atual', rarity: 'epic', maxStacks: 5, tags: ['COMBO', 'DAMAGE', 'SYNERGY'] },
     { id: 'ruptura', name: 'Ruptura', desc: '+100% Dano se HP do Alvo < 30%', rarity: 'epic', maxStacks: 3, tags: ['EXECUTE'] },
     { id: 'reator', name: 'Reator do Vazio', desc: '+5 Energia por Clique', rarity: 'epic', maxStacks: 5, tags: ['ENERGY'] },
-    
     { id: 'anomalia', name: 'Anomalia Crítica', desc: 'Críticos geram 10x mais Combo', rarity: 'legendary', maxStacks: 1, tags: ['CRIT', 'COMBO'] },
     { id: 'onipresenca', name: 'Onipresença', desc: '20% chance de disparar 3 cliques simultâneos', rarity: 'legendary', maxStacks: 3, tags: ['CLICK'] }
 ];
 
+const ENCOUNTER_SEQUENCE = ['fragmento', 'fragmento', 'parasita', 'colosso', 'fragmento', 'espelho', 'instavel', 'boss_observador'];
+
+const ENEMY_DB = {
+    'fragmento': { name: 'FRAGMENTO', hp: 50, breakMax: 200, reward: 2, energy: 1 },
+    'parasita': { name: 'PARASITA', hp: 120, breakMax: 300, reward: 5, energy: 2 },
+    'colosso': { name: 'COLOSSO', hp: 800, breakMax: 1000, reward: 15, energy: 5 },
+    'espelho': { name: 'ESPELHO', hp: 200, breakMax: 500, reward: 8, energy: 3 },
+    'instavel': { name: 'NÚCLEO INSTÁVEL', hp: 300, breakMax: 150, reward: 10, energy: 4 },
+    'boss_observador': { name: 'O OBSERVADOR', hp: 3000, breakMax: 1500, reward: 100, energy: 20, isBoss: true }
+};
+
 // ==========================================
-// STATES (Separação estrita)
+// STATES
 // ==========================================
 class MetaState {
     constructor() {
@@ -50,26 +56,30 @@ class RunState {
         this.isRunActive = false;
         this.isPaused = false;
         
-        // Atributos mutáveis
-        this.currentHP = 0;
-        this.maxHP = 1000000;
+        // Atributos de Combate & Economia
         this.energy = 0;
-        
-        // Controle de progressão da run
         this.totalClicks = 0;
-        this.damageDealt = 0;
         this.currentCombo = 0;
         this.maxCombo = 0;
         this.milestoneIndex = 0;
-        
-        // Upgrades da Run atual { id: level }
         this.runUpgrades = {};
+        this.pendingFragments = 0; 
+        
+        // Progressão da Run
+        this.difficultyTier = 1;
+        this.encounterIndex = 0;
+        
+        // Estatísticas para Fim de Run
+        this.stats = {
+            totalDamage: 0,
+            highestDamageHit: 0,
+            enemiesDefeated: 0,
+            bossesDefeated: 0,
+            totalBreaks: 0
+        };
     }
 }
 
-// ==========================================
-// SAVE SYSTEM
-// ==========================================
 class SaveSystem {
     static saveMeta(metaState) {
         localStorage.setItem('breakcore_meta', JSON.stringify(metaState));
@@ -87,10 +97,155 @@ class SaveSystem {
 }
 
 // ==========================================
-// STAT SYSTEM (Motor de Cálculo Centralizado)
+// SISTEMA DE COMBATE E INIMIGOS
+// ==========================================
+class Enemy {
+    constructor(id, data, tier) {
+        this.id = id;
+        this.name = data.name;
+        this.isBoss = data.isBoss || false;
+        
+        const scaleMult = Math.pow(1.3, tier - 1);
+        this.maxHP = Math.floor(data.hp * scaleMult);
+        this.currentHP = this.maxHP;
+        
+        this.breakMax = Math.floor(data.breakMax * scaleMult);
+        this.breakCurrent = this.breakMax;
+        
+        this.baseReward = Math.floor(data.reward * (1 + ((tier - 1) * 0.5)));
+        this.energyReward = data.energy;
+        
+        this.state = 'ACTIVE'; // SPAWNING, ACTIVE, BREAKING, DEFEATED
+        this.breakTimeoutId = null;
+    }
+
+    onHit(runState, clickSystem) {
+        if(this.state === 'DEFEATED') return;
+        if (this.id === 'parasita' && Math.random() < 0.1) {
+            clickSystem.combo.breakCombo();
+        }
+    }
+
+    takeBreakDamage(amount, runState) {
+        if (this.state !== 'ACTIVE') return;
+        this.breakCurrent -= amount;
+        if (this.breakCurrent <= 0) this.triggerBreak(runState);
+    }
+
+    triggerBreak(runState) {
+        this.state = 'BREAKING';
+        this.breakCurrent = 0;
+        runState.stats.totalBreaks++;
+        
+        this.breakTimeoutId = setTimeout(() => {
+            if (this.state === 'BREAKING') {
+                this.state = 'ACTIVE';
+                this.breakCurrent = this.breakMax;
+            }
+        }, 3000);
+    }
+
+    takeDamage(amount) {
+        if (this.state === 'DEFEATED' || this.state === 'SPAWNING') return false;
+        this.currentHP -= amount;
+        if (this.currentHP <= 0) {
+            this.currentHP = 0;
+            this.die();
+            return true;
+        }
+        return false;
+    }
+
+    die() {
+        this.state = 'DEFEATED';
+        if (this.breakTimeoutId) clearTimeout(this.breakTimeoutId);
+    }
+}
+
+class Boss extends Enemy {
+    constructor(id, data, tier) {
+        super(id, data, tier);
+        this.phase = 1;
+    }
+
+    takeDamage(amount) {
+        const died = super.takeDamage(amount);
+        if (!died && this.state !== 'DEFEATED') this.checkPhases();
+        return died;
+    }
+
+    checkPhases() {
+        const percent = this.currentHP / this.maxHP;
+        if (this.phase === 1 && percent <= 0.66) this.changePhase(2);
+        else if (this.phase === 2 && percent <= 0.33) this.changePhase(3);
+    }
+
+    changePhase(newPhase) {
+        if (this.phase === newPhase) return; 
+        this.phase = newPhase;
+        this.state = 'ACTIVE';
+        if (this.breakTimeoutId) clearTimeout(this.breakTimeoutId);
+        this.breakCurrent = this.breakMax;
+    }
+}
+
+class EncounterManager {
+    constructor(runState, uiManager) {
+        this.run = runState;
+        this.ui = uiManager;
+        this.currentEnemy = null;
+    }
+
+    startEncounter() {
+        if (!this.run.isRunActive) return;
+
+        const cycleIndex = this.run.encounterIndex % ENCOUNTER_SEQUENCE.length;
+        const enemyId = ENCOUNTER_SEQUENCE[cycleIndex];
+        const data = ENEMY_DB[enemyId];
+
+        if (data.isBoss) {
+            this.currentEnemy = new Boss(enemyId, data, this.run.difficultyTier);
+        } else {
+            this.currentEnemy = new Enemy(enemyId, data, this.run.difficultyTier);
+        }
+
+        this.currentEnemy.state = 'SPAWNING';
+        this.ui.updateCombatHUD(this.currentEnemy, this.run);
+        
+        setTimeout(() => {
+            if(!this.run.isRunActive || !this.currentEnemy) return;
+            this.currentEnemy.state = 'ACTIVE';
+            this.ui.updateCombatHUD(this.currentEnemy, this.run);
+        }, 500);
+    }
+
+    onEnemyDefeated() {
+        const enemy = this.currentEnemy;
+        this.run.energy += enemy.energyReward;
+        
+        let finalReward = enemy.baseReward;
+        if (enemy.id === 'instavel' && enemy.state === 'BREAKING') finalReward = Math.floor(finalReward * 2.5); 
+        
+        this.run.pendingFragments += finalReward;
+        this.run.stats.enemiesDefeated++;
+        
+        if (enemy.isBoss) {
+            this.run.stats.bossesDefeated++;
+            this.run.difficultyTier++; 
+        }
+
+        this.run.encounterIndex++;
+        
+        setTimeout(() => {
+            if(this.run.isRunActive) this.startEncounter();
+        }, 600);
+    }
+}
+
+// ==========================================
+// SISTEMA DE STATUS E UPGRADES
 // ==========================================
 class StatSystem {
-    // Avalia o estado Meta + Run para cuspir os status reais daquele clique
     static getEffectiveStats(run, meta) {
         let stats = {
             baseDamage: 1 + (meta.upgrades.dmg_inicial * 1),
@@ -108,7 +263,6 @@ class StatSystem {
         const u = run.runUpgrades;
         const level = (id) => u[id] || 0;
 
-        // Aplicação dos efeitos (Matemática pura, sem lógica de UI)
         stats.baseDamage += level('mao_pesada') * 2;
         stats.baseDamage += level('sobrecarga') * 5;
         stats.damageMult += level('sedenta') * 0.25;
@@ -118,7 +272,7 @@ class StatSystem {
         
         stats.comboPerClick += level('reflexo_rapido') * 1;
         stats.comboTimeout += level('foco_estavel') * 200;
-        stats.comboTimeout *= Math.pow(0.9, level('sobrecarga')); // Perde 10% cumulativo
+        stats.comboTimeout *= Math.pow(0.9, level('sobrecarga'));
 
         stats.critChance += level('precisao') * 0.05;
         stats.critDamage += level('ferocidade') * 0.30;
@@ -127,18 +281,10 @@ class StatSystem {
 
         if (level('anomalia') > 0) stats.comboCritSynergy = true;
 
-        // Multiplicadores Dinâmicos de Condição
-        if (level('recarga_cinetica') > 0) {
-            stats.damageMult += (Math.floor(run.energy / 100) * 0.01) * level('recarga_cinetica');
-        }
-        if (level('combo_visceral') > 0) {
-            stats.damageMult += Math.floor(run.currentCombo / 10) * 0.01 * level('combo_visceral');
-        }
-        if (level('ruptura') > 0 && (run.currentHP / run.maxHP) < 0.3) {
-            stats.damageMult += 1.0 * level('ruptura');
-        }
-
-        // Multiplicador do Combo Base (Step 1 mantido)
+        if (level('recarga_cinetica') > 0) stats.damageMult += (Math.floor(run.energy / 100) * 0.01) * level('recarga_cinetica');
+        if (level('combo_visceral') > 0) stats.damageMult += Math.floor(run.currentCombo / 10) * 0.01 * level('combo_visceral');
+        
+        // Multiplicador do Combo Base
         let comboBaseMult = 1;
         if (run.currentCombo >= 50) comboBaseMult = 4;
         else if (run.currentCombo >= 25) comboBaseMult = 3;
@@ -150,9 +296,6 @@ class StatSystem {
     }
 }
 
-// ==========================================
-// UPGRADE SYSTEM (Sorteio e Lógica de Cartas)
-// ==========================================
 class UpgradeSystem {
     constructor(runState, metaState, uiManager) {
         this.run = runState;
@@ -163,7 +306,6 @@ class UpgradeSystem {
     triggerMilestoneSelection() {
         this.run.isPaused = true;
         
-        // Filtra upgrades que ainda não chegaram no maxStacks
         let availablePool = UPGRADE_DB.filter(up => {
             const currentLevel = this.run.runUpgrades[up.id] || 0;
             return currentLevel < up.maxStacks;
@@ -173,25 +315,22 @@ class UpgradeSystem {
         for(let i=0; i<3; i++) {
             if(availablePool.length === 0) break;
             
-            // Sorteia raridade afetada pelo MetaUpgrade "Fortuna"
             const rarity = this.rollRarity();
             let poolByRarity = availablePool.filter(up => up.rarity === rarity);
-            
-            // Fallback se não tiver upgrade dessa raridade
             if(poolByRarity.length === 0) poolByRarity = availablePool; 
 
             const randomIndex = Math.floor(Math.random() * poolByRarity.length);
             const selected = poolByRarity[randomIndex];
             
             choices.push(selected);
-            availablePool = availablePool.filter(up => up.id !== selected.id); // Remove da pool para não repetir
+            availablePool = availablePool.filter(up => up.id !== selected.id);
         }
 
         this.ui.showUpgradeSelection(choices, (chosenId) => this.acquireUpgrade(chosenId));
     }
 
     rollRarity() {
-        const bonus = this.meta.upgrades.fortuna * 5; // Aumenta peso das raras
+        const bonus = this.meta.upgrades.fortuna * 5;
         const weights = {
             common: RARITY_WEIGHTS.common,
             uncommon: RARITY_WEIGHTS.uncommon + bonus,
@@ -199,7 +338,6 @@ class UpgradeSystem {
             epic: RARITY_WEIGHTS.epic + (bonus * 0.5),
             legendary: RARITY_WEIGHTS.legendary + (bonus * 0.2)
         };
-
         const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
         let random = Math.random() * totalWeight;
 
@@ -221,7 +359,7 @@ class UpgradeSystem {
 }
 
 // ==========================================
-// CORE LOGIC SYSTEMS (Click, Combo, Damage)
+// CORE LOGIC SYSTEMS (Click e Combo)
 // ==========================================
 class ComboSystem {
     constructor(runState, uiManager) {
@@ -245,19 +383,20 @@ class ComboSystem {
     }
 
     breakCombo() {
-        if (!this.run.isRunActive || this.run.isPaused) return; // Congela se pausado
+        if (!this.run.isRunActive || this.run.isPaused) return;
         this.run.currentCombo = 0;
         this.ui.updateHUD(this.run);
     }
 }
 
 class ClickSystem {
-    constructor(runState, metaState, upgradeSystem, comboSystem, uiManager) {
+    constructor(runState, metaState, upgradeSystem, comboSystem, uiManager, encounterManager) {
         this.run = runState;
         this.meta = metaState;
         this.upgrades = upgradeSystem;
         this.combo = comboSystem;
         this.ui = uiManager;
+        this.encounter = encounterManager;
     }
 
     processPhysicalClick(x, y) {
@@ -265,7 +404,6 @@ class ClickSystem {
 
         const stats = StatSystem.getEffectiveStats(this.run, this.meta);
         
-        // Verifica triggers de múltiplos cliques
         let clicksToProcess = 1;
         if (Math.random() < stats.tripleClickChance) clicksToProcess = 3;
         else if (Math.random() < stats.doubleClickChance) clicksToProcess = 2;
@@ -274,82 +412,99 @@ class ClickSystem {
             this.executeLogicClick(stats, x, y, i > 0);
         }
 
-        // Checagem de Milestones
         if (this.run.totalClicks >= MILESTONES[this.run.milestoneIndex]) {
             this.run.milestoneIndex++;
             this.upgrades.triggerMilestoneSelection();
         }
 
         this.ui.updateHUD(this.run, this.meta);
+        this.ui.updateCombatHUD(this.encounter.currentEnemy, this.run);
     }
 
     executeLogicClick(stats, x, y, isEcho) {
+        const enemy = this.encounter.currentEnemy;
+        if (!enemy || enemy.state === 'DEFEATED' || enemy.state === 'SPAWNING') return;
+
         this.run.totalClicks++;
         
-        // Cálculo de Dano com Critico
-        let finalDmg = stats.baseDamage * stats.damageMult;
+        let finalMult = stats.damageMult;
+        
+        // Multiplicadores Dinâmicos de Condição de HP
+        const levelRuptura = this.run.runUpgrades['ruptura'] || 0;
+        if (levelRuptura > 0 && (enemy.currentHP / enemy.maxHP) < 0.3) {
+            finalMult += 1.0 * levelRuptura;
+        }
+
+        if (enemy.state === 'BREAKING') finalMult *= 2; 
+
+        let finalDmg = stats.baseDamage * finalMult;
         let isCrit = Math.random() < stats.critChance;
         if (isCrit) finalDmg *= stats.critDamage;
-        
         finalDmg = Math.floor(finalDmg);
 
-        // Aplica
-        this.run.currentHP -= finalDmg;
-        this.run.damageDealt += finalDmg;
+        if (finalDmg > this.run.stats.highestDamageHit) this.run.stats.highestDamageHit = finalDmg;
+        this.run.stats.totalDamage += finalDmg;
+
+        enemy.onHit(this.run, this);
+
+        const died = enemy.takeDamage(finalDmg);
+        
+        const breakDamage = 15; 
+        if (!died) enemy.takeBreakDamage(breakDamage, this.run);
+
         this.run.energy += stats.energyPerClick;
         this.combo.registerCombo(stats, isCrit);
 
-        // Feedback
-        const offset = isEcho ? 30 : 0; // Desloca visualmente ecos
+        const offset = isEcho ? 30 : 0; 
         this.ui.spawnFloatingNumber(finalDmg, x + offset, y + offset, isCrit);
 
-        if (this.run.currentHP <= 0) {
-            this.run.currentHP = 0;
-            document.dispatchEvent(new Event('targetDied')); // Desacoplado
+        if (died) {
+            this.encounter.onEnemyDefeated();
         }
     }
 }
 
 // ==========================================
-// RUN MANAGER (Fragmentos e Controle de Ciclo)
+// RUN MANAGER (Fluxo Central)
 // ==========================================
 class RunManager {
-    constructor(runState, metaState, uiManager) {
+    constructor(runState, metaState, uiManager, encounterManager) {
         this.run = runState;
         this.meta = metaState;
         this.ui = uiManager;
+        this.encounter = encounterManager;
     }
 
     startRun() {
         this.run.isRunActive = true;
         this.run.isPaused = false;
-        this.run.currentHP = this.run.maxHP;
         this.run.energy = this.meta.upgrades.reserva * 10;
         this.run.totalClicks = 0;
-        this.run.damageDealt = 0;
         this.run.currentCombo = 0;
         this.run.maxCombo = 0;
         this.run.milestoneIndex = 0;
         this.run.runUpgrades = {};
+        this.run.pendingFragments = 0;
+        this.run.encounterIndex = 0;
+        this.run.difficultyTier = 1;
+        this.run.stats = { totalDamage: 0, highestDamageHit: 0, enemiesDefeated: 0, bossesDefeated: 0, totalBreaks: 0 };
         
         this.ui.hideModals();
         this.ui.updateHUD(this.run, this.meta);
+        
+        // Inicia o primeiro combate!
+        this.encounter.startEncounter();
     }
 
     endRun() {
         this.run.isRunActive = false;
         this.run.isPaused = true;
         
-        // Cálculo de Fragmentos (Equilíbrio de recompensa)
-        const fragBase = Math.floor(this.run.damageDealt / 1000);
-        const fragCombo = Math.floor(this.run.maxCombo / 5);
-        const fragMilestone = this.run.milestoneIndex * 50;
-        const totalEarned = fragBase + fragCombo + fragMilestone;
-
-        this.meta.fragments += totalEarned;
+        // Aplica fragmentos pendentes ao banco meta
+        this.meta.fragments += this.run.pendingFragments;
         SaveSystem.saveMeta(this.meta);
 
-        this.ui.showGameOver(this.run, totalEarned);
+        this.ui.showGameOver(this.run);
     }
 }
 
@@ -359,14 +514,12 @@ class RunManager {
 class UIManager {
     constructor() {
         this.els = {
-            hp: document.getElementById('ui-hp'),
             energy: document.getElementById('ui-energy'),
             combo: document.getElementById('ui-combo'),
             comboMult: document.getElementById('ui-combo-mult'),
             damage: document.getElementById('ui-damage'),
             clicks: document.getElementById('ui-clicks'),
             fragments: document.getElementById('ui-fragments'),
-            hpBarFill: document.getElementById('hp-bar-fill'),
             coreContainer: document.getElementById('core-container')
         };
     }
@@ -375,18 +528,50 @@ class UIManager {
         if(!meta) return;
         const stats = StatSystem.getEffectiveStats(run, meta);
         
-        this.els.hp.innerText = run.currentHP > 1000 ? (run.currentHP/1000).toFixed(1)+'k' : run.currentHP;
+        document.getElementById('ui-stage').innerText = `${run.difficultyTier}-${(run.encounterIndex % ENCOUNTER_SEQUENCE.length) + 1}`;
         this.els.energy.innerText = run.energy;
         this.els.combo.innerText = run.currentCombo;
         this.els.clicks.innerText = run.totalClicks;
-        this.els.fragments.innerText = meta.fragments;
+        this.els.fragments.innerText = meta.fragments + run.pendingFragments;
         
-        // Mostra o dano normal projetado no HUD
         this.els.damage.innerText = Math.floor(stats.baseDamage * stats.damageMult); 
         this.els.comboMult.innerText = (stats.damageMult).toFixed(1);
+    }
 
-        const hpPercent = (run.currentHP / run.maxHP) * 100;
-        this.els.hpBarFill.style.width = `${Math.max(0, hpPercent)}%`;
+    updateCombatHUD(enemy, run) {
+        if(!enemy) return;
+        
+        document.getElementById('enemy-name').innerText = enemy.name;
+        document.getElementById('ui-hp').innerText = enemy.currentHP > 1000 ? (enemy.currentHP/1000).toFixed(1)+'k' : enemy.currentHP;
+        document.getElementById('ui-max-hp').innerText = enemy.maxHP > 1000 ? (enemy.maxHP/1000).toFixed(1)+'k' : enemy.maxHP;
+        document.getElementById('hp-bar-fill').style.width = `${Math.max(0, (enemy.currentHP / enemy.maxHP) * 100)}%`;
+
+        document.getElementById('ui-break').innerText = enemy.breakCurrent;
+        document.getElementById('ui-max-break').innerText = enemy.breakMax;
+        document.getElementById('break-bar-fill').style.width = `${Math.max(0, (enemy.breakCurrent / enemy.breakMax) * 100)}%`;
+
+        const btn = document.getElementById('core-button');
+        const breakStatus = document.getElementById('break-status');
+        const bossPhase = document.getElementById('boss-phase-container');
+
+        if (enemy.state === 'BREAKING') {
+            btn.classList.add('core-breaking');
+            breakStatus.classList.remove('hidden');
+        } else {
+            btn.classList.remove('core-breaking');
+            breakStatus.classList.add('hidden');
+        }
+
+        if (enemy.isBoss) {
+            btn.classList.add('core-boss');
+            bossPhase.classList.remove('hidden');
+            document.getElementById('ui-boss-phase').innerText = enemy.phase;
+            if(enemy.state === 'SPAWNING') btn.style.animation = 'bossSpawn 0.5s ease-out';
+        } else {
+            btn.classList.remove('core-boss');
+            bossPhase.classList.add('hidden');
+            btn.style.animation = '';
+        }
     }
 
     spawnFloatingNumber(amount, x, y, isCrit) {
@@ -406,7 +591,6 @@ class UIManager {
         floatEl.addEventListener('animationend', () => floatEl.remove());
     }
 
-    // -- Telas --
     hideModals() {
         document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
     }
@@ -430,12 +614,13 @@ class UIManager {
         document.getElementById('upgrade-modal').classList.remove('hidden');
     }
 
-    showGameOver(run, fragmentsEarned) {
-        document.getElementById('sum-clicks').innerText = run.totalClicks;
-        document.getElementById('sum-damage').innerText = run.damageDealt;
+    showGameOver(run) {
+        document.getElementById('sum-enemies').innerText = run.stats.enemiesDefeated;
+        document.getElementById('sum-bosses').innerText = run.stats.bossesDefeated;
+        document.getElementById('sum-high-dmg').innerText = run.stats.highestDamageHit;
+        document.getElementById('sum-damage').innerText = run.stats.totalDamage;
         document.getElementById('sum-combo').innerText = run.maxCombo;
-        document.getElementById('sum-upgrades').innerText = Object.keys(run.runUpgrades).length;
-        document.getElementById('sum-fragments').innerText = fragmentsEarned;
+        document.getElementById('sum-fragments').innerText = run.pendingFragments;
         document.getElementById('game-over-modal').classList.remove('hidden');
     }
 
@@ -458,9 +643,7 @@ class UIManager {
                     <div><strong>${up.name} (Nv ${level})</strong></div>
                     <div style="font-size:12px; color:#aaa">${up.desc}</div>
                 </div>
-                <button class="meta-btn" ${canAfford ? '' : 'disabled'}>
-                    Custa: ${cost}
-                </button>
+                <button class="meta-btn" ${canAfford ? '' : 'disabled'}>Custa: ${cost}</button>
             `;
             
             if(canAfford) {
@@ -483,26 +666,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const ui = new UIManager();
     const comboSys = new ComboSystem(runState, ui);
     const upgradeSys = new UpgradeSystem(runState, metaState, ui);
-    const clickSys = new ClickSystem(runState, metaState, upgradeSys, comboSys, ui);
-    const runManager = new RunManager(runState, metaState, ui);
+    const encounterManager = new EncounterManager(runState, ui);
+    const runManager = new RunManager(runState, metaState, ui, encounterManager);
+    
+    // Injeção de todos os sistemas centralizados para o processador de cliques
+    const clickSys = new ClickSystem(runState, metaState, upgradeSys, comboSys, ui, encounterManager);
 
     // Controles HUD
     const coreBtn = document.getElementById('core-button');
     coreBtn.addEventListener('mousedown', (e) => clickSys.processPhysicalClick(e.clientX, e.clientY));
     
-    // Suporte a espaço
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space' && runState.isRunActive && !runState.isPaused) {
             e.preventDefault();
             coreBtn.style.transform = 'scale(0.95)';
             coreBtn.style.backgroundColor = 'rgba(255, 42, 75, 0.2)';
             setTimeout(() => { coreBtn.style.transform = ''; coreBtn.style.backgroundColor = 'transparent'; }, 50);
-            clickSys.processPhysicalClick(window.innerWidth/2, window.innerHeight/2 + 50);
+            
+            const rect = coreBtn.getBoundingClientRect();
+            clickSys.processPhysicalClick(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
     });
 
-    // Eventos de Sistema
-    document.addEventListener('targetDied', () => runManager.endRun());
     document.getElementById('extract-button').addEventListener('click', () => {
         if(runState.isRunActive && !runState.isPaused) runManager.endRun();
     });
@@ -513,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 metaState.fragments -= cost;
                 metaState.upgrades[id]++;
                 SaveSystem.saveMeta(metaState);
-                renderMeta(); // Re-renderiza para atualizar botões e custos
+                renderMeta(); 
             });
         };
         renderMeta();
@@ -521,6 +706,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('restart-button').addEventListener('click', () => runManager.startRun());
 
-    // Inicia a primeira vez na tela de Meta (Hub inicial)
+    // Inicia a primeira vez na tela de Meta
     document.getElementById('to-meta-button').click();
 });
