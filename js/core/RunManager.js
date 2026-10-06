@@ -12,7 +12,6 @@ export const RunManager = {
         GameState.run.energy = GameState.meta.metaUpgrades.energyReserve * 10;
         GameState.run.isRunActive = true;
         
-        // Delega o ciclo inicial para o EncounterManager
         EncounterManager.initRun();
         
         EventBus.emit("runStarted", GameState);
@@ -39,7 +38,6 @@ export const RunManager = {
     }
 };
 
-// Integração de fluxo vital
 EventBus.on("enemyDefeated", (enemy) => {
     EncounterManager.onEnemyDefeated(enemy);
 });
