@@ -7,6 +7,8 @@ import { MetaProgression } from '../progression/MetaProgression.js';
 import { UPGRADE_RARITIES } from '../data/upgrades.js';
 import { EnemySystem } from '../combat/EnemySystem.js';
 import { RELICS, SYNERGIES } from '../data/relics.js';
+import { EventSystem } from '../events/EventSystem.js';
+import { MerchantSystem } from '../events/MerchantSystem.js';
 
 export const UIManager = {
     init() {
@@ -26,9 +28,19 @@ export const UIManager = {
             upgradeModal: document.getElementById('upgrade-modal'),
             modalTitle: document.getElementById('modal-title'),
             upgradeContainer: document.getElementById('upgrade-choices-container'),
+            
+            eventModal: document.getElementById('event-modal'),
+            eventTitle: document.getElementById('event-title'),
+            eventDesc: document.getElementById('event-desc'),
+            eventChoices: document.getElementById('event-choices'),
+            
+            merchantModal: document.getElementById('merchant-modal'),
+            merchantItems: document.getElementById('merchant-items'),
+            merchantRerollBtn: document.getElementById('btn-merchant-reroll'),
+            merchantCloseBtn: document.getElementById('btn-merchant-close'),
+            
             metaModal: document.getElementById('meta-modal'),
             metaContainer: document.getElementById('meta-upgrades-container'),
-            
             relicsList: document.getElementById('relics-list'),
             synergiesList: document.getElementById('synergies-list'),
             
@@ -51,6 +63,16 @@ export const UIManager = {
             this.updateRelicsPanel();
         });
 
+        // Eventos e Merchant listeners
+        EventBus.on("showEvent", (ev) => this.showEventModal(ev));
+        EventBus.on("showMerchant", (data) => this.showMerchantModal(data));
+        
+        this.els.merchantRerollBtn.addEventListener('click', () => MerchantSystem.reroll());
+        this.els.merchantCloseBtn.addEventListener('click', () => {
+            this.els.merchantModal.classList.add('hidden');
+            MerchantSystem.closeMerchant();
+        });
+
         document.getElementById('btn-open-meta').addEventListener('click', () => {
             this.updateMetaUI();
             this.els.metaModal.classList.remove('hidden');
@@ -59,7 +81,6 @@ export const UIManager = {
             this.els.metaModal.classList.add('hidden');
         });
         
-        // Inicializa limpo
         this.updateRelicsPanel();
     },
 
@@ -69,8 +90,13 @@ export const UIManager = {
         const enemy = EnemySystem.getActiveEnemy();
         const fn = NumberSystem.formatNumber.bind(NumberSystem);
 
-        if (enemy) {
-            this.els.encounter.innerText = r.encounterIndex;
+        if (r.eventState === "ACTIVE") {
+            this.els.enemyName.innerText = "UNKNOWN EVENT";
+            this.els.enemyName.style.color = "#ff00ff";
+        } else if (r.merchantState === "ACTIVE") {
+            this.els.enemyName.innerText = "MERCHANT NODE";
+            this.els.enemyName.style.color = "#bb88ff";
+        } else if (enemy && r.merchantState === "NONE" && r.eventState === "NONE") {
             this.els.enemyName.innerText = enemy.name;
             this.els.enemyName.style.color = enemy.color;
             this.els.hp.innerText = `${fn(enemy.currentHP)}/${fn(enemy.maxHP)}`;
@@ -82,6 +108,7 @@ export const UIManager = {
             }
         }
 
+        this.els.encounter.innerText = r.encounterIndex;
         this.els.energy.innerText = fn(r.energy);
         this.els.combo.innerText = fn(r.currentCombo);
         this.els.multiplier.innerText = fn(r.comboMultiplier);
@@ -95,7 +122,7 @@ export const UIManager = {
         this.els.upgradeContainer.innerHTML = '';
         
         choices.forEach(item => {
-            const rarityInfo = UPGRADE_RARITIES[item.rarity];
+            const rarityInfo = UPGRADE_RARITIES[item.rarity] || { color: "#fff" };
             const card = document.createElement('div');
             card.className = 'card';
             card.style.borderColor = rarityInfo.color;
@@ -120,14 +147,97 @@ export const UIManager = {
         this.els.upgradeModal.classList.remove('hidden');
     },
 
+    showEventModal(eventData) {
+        this.els.eventTitle.innerText = eventData.name;
+        this.els.eventDesc.innerText = eventData.description;
+        this.els.eventChoices.innerHTML = '';
+        
+        eventData.choices.forEach(choice => {
+            const btn = document.createElement('div');
+            btn.className = 'event-choice-btn';
+            
+            // Requerimentos Visuais
+            let reqText = "";
+            let disabled = false;
+            if (choice.requirements) {
+                if (choice.requirements.energy && GameState.run.energy < choice.requirements.energy) {
+                    reqText = ` [Requires ${choice.requirements.energy} Energy]`;
+                    disabled = true;
+                }
+                if (choice.requirements.minRelics && Object.keys(GameState.run.activeRelics || {}).length < choice.requirements.minRelics) {
+                    reqText = ` [Requires a Relic]`;
+                    disabled = true;
+                }
+            }
+            if (disabled) btn.classList.add('disabled');
+
+            let riskHtml = choice.risk ? `<div class="event-risk-label">RISK: ${choice.risk.probability * 100}%</div>` : "";
+
+            btn.innerHTML = `
+                <h4>${choice.label}${reqText}</h4>
+                <p>${choice.description}</p>
+                ${riskHtml}
+            `;
+            
+            if (!disabled) {
+                btn.addEventListener('click', () => {
+                    this.els.eventModal.classList.add('hidden');
+                    EventSystem.selectChoice(choice.id);
+                });
+            }
+            
+            this.els.eventChoices.appendChild(btn);
+        });
+        
+        this.els.eventModal.classList.remove('hidden');
+    },
+
+    showMerchantModal(data) {
+        this.els.merchantItems.innerHTML = '';
+        this.els.merchantRerollBtn.innerText = `REROLL (${data.rerollCost} ENG)`;
+        
+        if (GameState.run.energy < data.rerollCost) {
+            this.els.merchantRerollBtn.classList.add('disabled');
+        } else {
+            this.els.merchantRerollBtn.classList.remove('disabled');
+        }
+
+        data.items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card merchant-card';
+            if (item.purchased) card.classList.add('disabled');
+            
+            let color = "#aaa";
+            if(item.type === "UPGRADE" && item.rarity) color = UPGRADE_RARITIES[item.rarity].color;
+            if(item.type === "RELIC") color = "#ffaa00";
+            card.style.borderColor = color;
+
+            card.innerHTML = `
+                <h3 style="color: ${color}">${item.name}</h3>
+                <div class="desc" style="margin-top:10px;">${item.description}</div>
+                <div class="cost-tag">${item.purchased ? "SOLD OUT" : item.cost + " ENG"}</div>
+            `;
+            
+            if (!item.purchased && GameState.run.energy >= item.cost) {
+                card.addEventListener('click', () => {
+                    MerchantSystem.buyItem(item.uid);
+                });
+            } else if (!item.purchased) {
+                card.style.opacity = "0.5";
+            }
+            
+            this.els.merchantItems.appendChild(card);
+        });
+        
+        this.els.merchantModal.classList.remove('hidden');
+    },
+
     updateRelicsPanel() {
         this.els.relicsList.innerHTML = '';
         const r = GameState.run;
-        
         for (const [id, stacks] of Object.entries(r.activeRelics || {})) {
             const relic = RELICS.find(x => x.id === id);
             if (!relic) continue;
-            
             const div = document.createElement('div');
             div.className = `relic-item ${relic.rarity.toLowerCase()}`;
             div.innerHTML = `
@@ -180,6 +290,6 @@ export const UIManager = {
 
     hideGameOver() {
         this.els.gameOverScreen.classList.add('hidden');
-        this.updateRelicsPanel(); // Limpa na nova run
+        this.updateRelicsPanel(); 
     }
 };
