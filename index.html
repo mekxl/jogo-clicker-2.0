@@ -11,7 +11,7 @@
         <div class="logo">BREAK//CORE</div>
         <div class="stats-container">
             <div class="stat-box">
-                <span class="label">ENCOUNTER <span id="ui-encounter">1</span></span>
+                <span class="label">NODE <span id="ui-encounter">1</span></span>
                 <span id="ui-enemy-name" class="value" style="font-size: 0.9rem; color: #fff;">Enemy Name</span>
             </div>
             <div class="stat-box">
@@ -46,7 +46,6 @@
         <button id="btn-open-meta" class="small-btn">META PROGRESSION</button>
     </div>
 
-    <!-- Container Flexível para Palco + Relíquias -->
     <div class="main-layout">
         <aside id="relics-panel" class="relics-sidebar">
             <h3>ACTIVE RELICS</h3>
@@ -66,6 +65,24 @@
     <div id="upgrade-modal" class="overlay hidden">
         <h2 id="modal-title">SELECT UPGRADE</h2>
         <div id="upgrade-choices-container" class="cards-container"></div>
+    </div>
+    
+    <!-- EVENT MODAL -->
+    <div id="event-modal" class="overlay hidden">
+        <h1 id="event-title" style="color: #ff00ff; letter-spacing: 3px;">UNKNOWN EVENT</h1>
+        <p id="event-desc" style="max-width: 600px; text-align: center; margin-bottom: 2rem; color: #ccc;"></p>
+        <div id="event-choices" class="event-choices-container"></div>
+    </div>
+
+    <!-- MERCHANT MODAL -->
+    <div id="merchant-modal" class="overlay hidden">
+        <h1 style="color: #bb88ff; letter-spacing: 3px;">WANDERING MERCHANT</h1>
+        <p style="color: #ccc; margin-bottom: 2rem;">Trade Energy for powerful assets.</p>
+        <div id="merchant-items" class="cards-container"></div>
+        <div style="margin-top: 2rem; display: flex; gap: 20px;">
+            <button id="btn-merchant-reroll" class="large-btn">REROLL</button>
+            <button id="btn-merchant-close" class="large-btn outline-btn">LEAVE NODE</button>
+        </div>
     </div>
 
     <div id="meta-modal" class="overlay hidden">
