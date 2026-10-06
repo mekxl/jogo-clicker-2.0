@@ -6,7 +6,7 @@ export const GameState = {
         bossesDefeated: 0,
         fragmentsOfVoid: 0,
         metaUpgrades: {
-            startingDamage: 0, // níveis comprados
+            startingDamage: 0,
             energyReserve: 0,
             luck: 0,
             knowledge: 0,
@@ -18,7 +18,7 @@ export const GameState = {
     resetRunState() {
         this.run = {
             isRunActive: false,
-            isPaused: false, // Usado durante escolhas de upgrade
+            isPaused: false,
             currentHP: 0,
             maxHP: 0,
             energy: 0,
@@ -29,13 +29,13 @@ export const GameState = {
             totalDamage: 0,
             encounterIndex: 0,
             enemiesDefeated: 0,
-            totalBreaks: 0
+            totalBreaks: 0,
             
-            // Novos sistemas de progressão
-            activeUpgrades: {}, // { id: count }
+            activeUpgrades: {},
+            activeRelics: {}, // NOVO
+            activeSynergies: [], // NOVO
             milestoneIndex: 0,
             
-            // Atributos finais calculados
             stats: {
                 damagePerClick: 1,
                 energyPerClick: 1,
@@ -43,7 +43,18 @@ export const GameState = {
                 critMultiplier: 1.5,
                 comboEffectiveness: 1.0,
                 globalMultiplier: 1.0,
-                fovBonus: 1.0
+                fovBonus: 1.0,
+                
+                // Novos stats integrados de Relíquias/Break
+                breakDamage: 1,
+                breakMultiplier: 1.5,
+                breakDurationMs: 3000,
+                comboGlobalMod: 0,
+                comboCritBonus: 0,
+                comboEnergyBonus: 0,
+                critEnergyBonus: 0,
+                breakAutoCrit: 0,
+                luckBonus: 0
             }
         };
     }
