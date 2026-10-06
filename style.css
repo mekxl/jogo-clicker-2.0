@@ -22,20 +22,43 @@ body, html { margin: 0; padding: 0; background-color: var(--bg-color); color: va
 #stats-panel { display: flex; flex-wrap: wrap; justify-content: space-around; width: 95%; max-width: 900px; margin-top: 15px; padding: 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); }
 .stat-box { font-weight: bold; font-size: 14px; margin: 5px; }
 
-#hp-bar-container { width: 80%; max-width: 600px; height: 10px; background-color: var(--hp-bar-bg); margin-top: 20px; border-radius: 5px; overflow: hidden; border: 1px solid #333; }
-#hp-bar-fill { height: 100%; width: 100%; background-color: var(--core-color); transition: width 0.1s linear; }
+/* ---- SISTEMA DE COMBATE ---- */
+#combat-panel { width: 80%; max-width: 600px; text-align: center; margin-top: 15px; }
+.enemy-text { margin: 0 0 10px 0; font-size: 24px; letter-spacing: 2px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+#boss-phase-container { font-size: 14px; font-weight: bold; color: #ffeb3b; letter-spacing: 4px; margin-bottom: 10px; animation: pulsePhase 1s infinite alternate; }
 
+.bar-wrapper { position: relative; margin-bottom: 10px; }
+.bar-bg { width: 100%; height: 16px; border-radius: 4px; overflow: hidden; border: 1px solid #333; position: relative; }
+.hp-bg { background-color: var(--hp-bar-bg); }
+.break-bg { background-color: #0d2b36; border-color: #1b5e20; height: 12px;}
+
+#hp-bar-fill { height: 100%; width: 100%; background-color: var(--core-color); transition: width 0.05s linear; }
+#break-bar-fill { height: 100%; width: 100%; background-color: #00e5ff; transition: width 0.05s linear; }
+
+.bar-label { position: absolute; top: -2px; left: 0; width: 100%; text-align: center; font-size: 11px; font-weight: bold; text-shadow: 1px 1px 0 #000; pointer-events: none; }
+.alert-text { color: #00e5ff; font-weight: bold; text-shadow: 0 0 10px #00e5ff; margin-top: 5px; animation: flashWarning 0.5s infinite alternate; }
+
+/* Núcleo de Clique */
 #core-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; position: relative; width: 100%; }
 #core-button { width: 150px; height: 150px; background-color: transparent; border: 4px solid var(--core-color); border-radius: 50%; cursor: pointer; outline: none; box-shadow: 0 0 20px var(--core-color), inset 0 0 20px var(--core-color); transition: transform 0.05s; }
 #core-button:active { transform: scale(0.95); background-color: rgba(255, 42, 75, 0.2); }
 
+/* Estados Visuais do Core */
+.core-breaking { border-color: #00e5ff !important; box-shadow: 0 0 40px #00e5ff, inset 0 0 40px #00e5ff !important; animation: shake 0.2s infinite; }
+.core-boss { border-style: dashed !important; border-color: #ff9800 !important; box-shadow: 0 0 30px #ff9800, inset 0 0 30px #ff9800 !important; }
+
+/* Animações e Feedbacks */
 .floating-number { position: absolute; color: #fff; font-weight: bold; font-size: 20px; pointer-events: none; text-shadow: 0px 0px 5px var(--core-color); animation: floatUp 0.6s ease-out forwards; }
 @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-50px) scale(1.5); opacity: 0; } }
+@keyframes flashWarning { 0% { opacity: 1; } 100% { opacity: 0.3; } }
+@keyframes pulsePhase { 0% { text-shadow: 0 0 5px #ffeb3b; } 100% { text-shadow: 0 0 20px #ffeb3b; color: #fff; } }
+@keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 50% { transform: translate(-1px, -2px) rotate(-1deg); } 100% { transform: translate(-2px, 1px) rotate(1deg); } }
+@keyframes bossSpawn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-/* Botões */
+/* Botões UI */
 .action-btn, .danger-btn { margin-top: 20px; padding: 12px 24px; color: #fff; border: none; font-weight: bold; cursor: pointer; font-family: inherit; text-transform: uppercase; }
 .action-btn { background-color: var(--meta-color); color: #000; box-shadow: 0 0 10px var(--meta-color); }
-.danger-btn { background-color: transparent; border: 1px solid var(--core-color); color: var(--core-color); position: absolute; bottom: 20px; }
+.danger-btn { background-color: transparent; border: 1px solid var(--core-color); color: var(--core-color); position: absolute; bottom: 20px; z-index: 10; }
 .danger-btn:hover { background-color: rgba(255,42,75,0.2); }
 
 /* Modais */
@@ -49,7 +72,6 @@ body, html { margin: 0; padding: 0; background-color: var(--bg-color); color: va
 .up-rarity { font-size: 12px; text-transform: uppercase; margin-bottom: 15px; font-weight: bold; }
 .up-desc { font-size: 14px; flex-grow: 1; color: #aaa; }
 .up-tags { font-size: 11px; color: #666; margin-top: 10px; }
-.up-level { position: absolute; bottom: 15px; right: 15px; font-weight: bold; background: #222; padding: 3px 8px; border-radius: 4px; }
 
 /* Cores de Raridade */
 .common { border-color: var(--rarity-common); box-shadow: 0 0 10px rgba(136,136,136,0.2); }
@@ -68,3 +90,4 @@ body, html { margin: 0; padding: 0; background-color: var(--bg-color); color: va
 .meta-item { display: flex; justify-content: space-between; align-items: center; background: #151515; padding: 15px; border: 1px solid var(--meta-color); border-radius: 5px; }
 .meta-btn { background: var(--meta-color); color: #000; border: none; padding: 5px 10px; cursor: pointer; font-weight: bold; }
 .meta-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
+.summary-box { text-align: center; margin: 20px 0; font-size: 18px; line-height: 1.6; }
