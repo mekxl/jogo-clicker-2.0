@@ -27,6 +27,9 @@ export const GameState = {
             maxCombo: 0,
             comboMultiplier: 1,
             totalDamage: 0,
+            encounterIndex: 0,
+            enemiesDefeated: 0,
+            totalBreaks: 0
             
             // Novos sistemas de progressão
             activeUpgrades: {}, // { id: count }
