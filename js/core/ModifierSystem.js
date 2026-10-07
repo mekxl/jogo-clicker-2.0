@@ -23,38 +23,45 @@ export const ModifierSystem = {
             comboEnergyBonus: 0,
             critEnergyBonus: 0,
             breakAutoCrit: 0,
-            luckBonus: (m.luck * 0.05)
+            luckBonus: (m.luck * 0.05),
+            autoSpeedMult: 1.0,
+            autoDamageMult: 1.0,
+            frenzyMultiplierBonus: 2.0,
+            frenzyDurationMs: 5000
         };
 
         const flatEffects = [];
         const multiEffects = [];
 
         for (const [upgId, count] of Object.entries(r.activeUpgrades || {})) {
-            const upgradeData = UPGRADES.find(u => u.id === upgId);
-            if (!upgradeData) continue;
-            for (let i = 0; i < count; i++) {
-                if (upgradeData.effects.globalMultiplier) multiEffects.push(upgradeData.effects);
-                else flatEffects.push(upgradeData.effects);
+            const upgData = UPGRADES.find(u => u.id === upgId);
+            if (upgData) {
+                for (let i = 0; i < count; i++) {
+                    if (upgData.effects.globalMultiplier) multiEffects.push(upgData.effects);
+                    else flatEffects.push(upgData.effects);
+                }
             }
         }
 
         for (const [relicId, count] of Object.entries(r.activeRelics || {})) {
-            const relicData = RELICS.find(rx => rx.id === relicId);
-            if (!relicData) continue;
-            for (let i = 0; i < count; i++) {
-                if (relicData.effects.globalMultiplier) multiEffects.push(relicData.effects);
-                else flatEffects.push(relicData.effects);
+            const relData = RELICS.find(rx => rx.id === relicId);
+            if (relData) {
+                for (let i = 0; i < count; i++) {
+                    if (relData.effects.globalMultiplier) multiEffects.push(relData.effects);
+                    else flatEffects.push(relData.effects);
+                }
             }
         }
 
         for (const synId of (r.activeSynergies || [])) {
             const synData = SYNERGIES.find(s => s.id === synId);
-            if (!synData) continue;
-            if (synData.effects.globalMultiplier) multiEffects.push(synData.effects);
-            else flatEffects.push(synData.effects);
+            if (synData) {
+                if (synData.effects.globalMultiplier) multiEffects.push(synData.effects);
+                else flatEffects.push(synData.effects);
+            }
         }
 
-        const applyFlat = (eff) => {
+        flatEffects.forEach(eff => {
             if (eff.baseDamage) stats.damagePerClick += eff.baseDamage;
             if (eff.energyPerClick) stats.energyPerClick += eff.energyPerClick;
             if (eff.critChance) stats.critChance += eff.critChance;
@@ -70,9 +77,11 @@ export const ModifierSystem = {
             if (eff.comboEnergyBonus) stats.comboEnergyBonus += eff.comboEnergyBonus;
             if (eff.critEnergyBonus) stats.critEnergyBonus += eff.critEnergyBonus;
             if (eff.breakAutoCrit) stats.breakAutoCrit += eff.breakAutoCrit;
-        };
-
-        flatEffects.forEach(applyFlat);
+            // Novos status
+            if (eff.autoSpeedMult) stats.autoSpeedMult += eff.autoSpeedMult;
+            if (eff.autoDamageMult) stats.autoDamageMult += eff.autoDamageMult;
+            if (eff.frenzyMultiplierBonus) stats.frenzyMultiplierBonus += eff.frenzyMultiplierBonus;
+        });
 
         multiEffects.forEach(eff => {
             if (eff.globalMultiplier) stats.globalMultiplier *= eff.globalMultiplier;
@@ -81,6 +90,11 @@ export const ModifierSystem = {
         if (r.comboMultiplier > 1) {
             stats.globalMultiplier += (stats.comboGlobalMod * (r.comboMultiplier - 1));
             stats.critChance += stats.comboCritBonus;
+        }
+
+        // Aplica FRENZY no Multiplicador Global se ativo
+        if (r.frenzy && r.frenzy.isActive) {
+            stats.globalMultiplier *= stats.frenzyMultiplierBonus;
         }
 
         r.stats = stats;
