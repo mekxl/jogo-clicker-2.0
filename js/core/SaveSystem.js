@@ -11,12 +11,12 @@ export const SaveSystem = {
         };
         localStorage.setItem(this.saveKey, JSON.stringify(data));
     },
+    
     load() {
         const savedData = localStorage.getItem(this.saveKey);
         if (savedData) {
             try {
                 const parsed = JSON.parse(savedData);
-                // Simple Migration / Merge seguro
                 if (parsed.meta) {
                     GameState.meta.totalClicks = parsed.meta.totalClicks || 0;
                     GameState.meta.highestDamageHit = parsed.meta.highestDamageHit || 0;
@@ -25,12 +25,16 @@ export const SaveSystem = {
                     if (parsed.meta.metaUpgrades) {
                         GameState.meta.metaUpgrades = { ...GameState.meta.metaUpgrades, ...parsed.meta.metaUpgrades };
                     }
+                    if (parsed.meta.settings) {
+                        GameState.meta.settings = { ...GameState.meta.settings, ...parsed.meta.settings };
+                    }
                 }
             } catch (e) {
                 console.error("Save file corrupted.", e);
             }
         }
     },
+    
     clear() {
         localStorage.removeItem(this.saveKey);
     }
