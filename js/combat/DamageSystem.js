@@ -6,17 +6,17 @@ import { ComboSystem } from './ComboSystem.js';
 import { EventBus } from '../core/EventBus.js';
 import { RewardSystem } from '../progression/RewardSystem.js';
 import { ModifierSystem } from '../core/ModifierSystem.js';
+import { NumberSystem } from '../core/NumberSystem.js';
+import { FrenzySystem } from '../feedback/FrenzySystem.js';
 
 export const DamageSystem = {
+    // Processa clique manual do Jogador
     processClickDamage(clickEventData) {
         if (!GameState.run.isRunActive || GameState.run.isPaused) return;
-
         const target = EnemySystem.getActiveEnemy();
         if (!target || (target.state !== "ACTIVE" && target.state !== "BREAKING")) return;
 
-        // É crucial recalcular status aqui se dependermos do combo crescendo a cada hit
         ModifierSystem.recalculateStats();
-        
         GameState.run.totalClicks++;
         GameState.meta.totalClicks++;
 
@@ -33,26 +33,21 @@ export const DamageSystem = {
         if (isCrit) finalDamage *= stats.critMultiplier;
 
         finalDamage *= stats.globalMultiplier;
+        if (target.state === "BREAKING") finalDamage *= stats.breakMultiplier;
 
-        // MULTIPLICADOR DE BREAK
-        if (target.state === "BREAKING") {
-            finalDamage *= stats.breakMultiplier;
-        }
-
-        finalDamage = Math.floor(finalDamage);
+        finalDamage = NumberSystem.sanitizeNumber(finalDamage);
         if (finalDamage < 1) finalDamage = 1;
 
         const isDefeated = EnemySystem.takeDamage(finalDamage);
-        
-        // Dano de BREAK modular
         BreakSystem.takeBreakDamage(stats.breakDamage); 
 
+        // Update run stats
         GameState.run.totalDamage += finalDamage;
-        if (finalDamage > GameState.meta.highestDamageHit) {
-            GameState.meta.highestDamageHit = finalDamage;
-        }
+        if (finalDamage > GameState.meta.highestDamageHit) GameState.meta.highestDamageHit = finalDamage;
 
-        // Energia
+        // Feedback System Triggers
+        FrenzySystem.addFrenzy(isCrit ? 3 : 1);
+
         let energyGain = stats.energyPerClick;
         if (GameState.run.comboMultiplier > 1) energyGain += stats.comboEnergyBonus;
         if (isCrit) energyGain += stats.critEnergyBonus;
@@ -64,17 +59,56 @@ export const DamageSystem = {
             amount: finalDamage, 
             isCrit: isCrit,
             state: target.state,
-            x: clickEventData.x, 
-            y: clickEventData.y 
+            x: clickEventData ? clickEventData.x : null, 
+            y: clickEventData ? clickEventData.y : null,
+            source: 'click'
         });
         
         RewardSystem.checkMilestones(GameState.run.totalClicks);
         EventBus.emit("stateUpdated");
 
-        if (isDefeated) {
-            GameState.meta.enemiesDefeated++;
-            GameState.run.enemiesDefeated = (GameState.run.enemiesDefeated || 0) + 1;
-            EventBus.emit("enemyDefeated", target);
-        }
+        if (isDefeated) this.handleDefeat(target);
+    },
+
+    // Processa dano originado da Automação (Drones) sem estourar combo
+    processAutoDamage(baseAmount, sourceId) {
+        if (!GameState.run.isRunActive || GameState.run.isPaused) return;
+        const target = EnemySystem.getActiveEnemy();
+        if (!target || (target.state !== "ACTIVE" && target.state !== "BREAKING")) return;
+
+        const stats = GameState.run.stats;
+        let finalDamage = baseAmount * stats.autoDamageMult;
+        
+        let isCrit = Math.random() < stats.critChance; // Auto pode critar
+        if (isCrit) finalDamage *= stats.critMultiplier;
+
+        finalDamage *= stats.globalMultiplier;
+        if (target.state === "BREAKING") finalDamage *= stats.breakMultiplier;
+
+        finalDamage = NumberSystem.sanitizeNumber(finalDamage);
+        if (finalDamage < 1) finalDamage = 1;
+
+        const isDefeated = EnemySystem.takeDamage(finalDamage);
+        
+        GameState.run.totalDamage += finalDamage;
+
+        EventBus.emit("damage", { 
+            amount: finalDamage, 
+            isCrit: isCrit,
+            state: target.state,
+            x: null, y: null,
+            source: 'auto',
+            sourceId: sourceId
+        });
+        
+        EventBus.emit("stateUpdated");
+
+        if (isDefeated) this.handleDefeat(target);
+    },
+
+    handleDefeat(target) {
+        GameState.meta.enemiesDefeated++;
+        GameState.run.enemiesDefeated = (GameState.run.enemiesDefeated || 0) + 1;
+        EventBus.emit("enemyDefeated", target);
     }
 };
