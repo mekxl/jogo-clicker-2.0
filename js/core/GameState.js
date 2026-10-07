@@ -11,6 +11,12 @@ export const GameState = {
             luck: 0,
             knowledge: 0,
             resistance: 0
+        },
+        settings: {
+            particlesEnabled: true,
+            screenShakeEnabled: true,
+            sfxEnabled: true,
+            sfxVolume: 0.5
         }
     },
     run: {},
@@ -28,22 +34,30 @@ export const GameState = {
             comboMultiplier: 1,
             totalDamage: 0,
             
-            encounterIndex: 0, // Qual Node/Room estamos
-            combatCount: 0,    // Quantos inimigos de fato matamos
+            encounterIndex: 0,
+            combatCount: 0,
             enemiesDefeated: 0,
             totalBreaks: 0,
             
-            eventState: "NONE", // NONE, ACTIVE, RESOLVING
+            eventState: "NONE",
             merchantState: "NONE",
             merchantRerolls: 0,
-            skipNextCombat: false, // Efeito de eventos
+            skipNextCombat: false,
             
             activeUpgrades: {},
             activeRelics: {}, 
             activeSynergies: [], 
             milestoneIndex: 0,
+
+            // Novo: Integração de Frenzy e Automação
+            frenzy: {
+                isActive: false,
+                meter: 0
+            },
+            automation: {
+                activeEntities: {} // Armazena instâncias das automações
+            },
             
-            // Modificadores extras vindos de eventos que sobrevivem na run
             eventModifiers: {
                 baseDamage: 0,
                 comboEffectiveness: 0,
@@ -66,7 +80,13 @@ export const GameState = {
                 comboEnergyBonus: 0,
                 critEnergyBonus: 0,
                 breakAutoCrit: 0,
-                luckBonus: 0
+                luckBonus: 0,
+                
+                // Automation e Frenzy Stats
+                autoSpeedMult: 1.0,
+                autoDamageMult: 1.0,
+                frenzyMultiplierBonus: 2.0, // Frenzy base dobra o dano
+                frenzyDurationMs: 5000
             }
         };
     }
