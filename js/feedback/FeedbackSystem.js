@@ -28,34 +28,46 @@ export const FeedbackSystem = {
         EventBus.on("damage", (data) => {
             this.spawnFloatingDamage(data);
             if(data.source === 'click') {
-                this.pulseCore();
+                this.hitSquashCore(); // Novo efeito de click
                 if(data.isCrit) this.shakeScreen('low');
                 this.spawnParticles(data.isCrit ? 5 : 1, data.state === "BREAKING" ? "#00ccff" : (data.isCrit ? "#ffaa00" : "#ff1a1a"));
             }
         });
 
         EventBus.on("breakTriggered", () => {
-            this.spawnTextPop("BREAK!", "#00ccff");
+            this.coreElement.classList.add('flash-white');
+            setTimeout(() => this.coreElement.classList.remove('flash-white'), 100);
+            this.spawnTextPop("RUPTURA!", "#00ccff", "3rem");
             this.shakeScreen('high');
             this.spawnParticles(15, "#00ccff");
         });
+        
+        EventBus.on("comboMilestone", (combo) => {
+            this.spawnTextPop(`COMBO x${combo}!`, "#ffaa00", "2rem");
+            this.shakeScreen('low');
+        });
 
         EventBus.on("enemyDefeated", (enemy) => {
-            if (enemy.type === "BOSS") this.shakeScreen('extreme');
-            else this.shakeScreen('medium');
+            if (enemy.type === "BOSS") {
+                this.spawnTextPop("CHEFE DERROTADO", "#ffaa00", "3rem");
+                this.shakeScreen('extreme');
+            } else {
+                this.shakeScreen('medium');
+            }
             this.spawnParticles(enemy.type === "BOSS" ? 40 : 10, "#ffffff");
         });
 
         EventBus.on("frenzyStarted", () => {
+            this.spawnTextPop("FRENESI!", "#ff00ff", "3rem");
             this.shakeScreen('extreme');
             this.spawnParticles(30, "#ff00ff");
         });
 
         EventBus.on("bossPhaseChanged", (data) => {
-            this.spawnTextPop(`PHASE ${data.boss.currentPhaseIndex + 1}`, "#ff0000");
+            this.spawnTextPop(`FASE ${data.boss.currentPhaseIndex + 1}: ${data.phase.name}`, "#ff0000", "2rem");
             this.shakeScreen('extreme');
             this.spawnParticles(20, "#ff0000");
-            this.updateCoreStateClass(); // força estilo da fase
+            this.updateCoreStateClass(); 
         });
 
         EventBus.on("stateUpdated", () => this.updateCoreStateClass());
@@ -86,11 +98,11 @@ export const FeedbackSystem = {
         setTimeout(() => this.body.classList.remove(`shake-${intensity}`), 300);
     },
 
-    pulseCore() {
+    hitSquashCore() {
         if (!this.coreElement) return;
-        this.coreElement.classList.remove('pulse');
+        this.coreElement.classList.remove('squash');
         void this.coreElement.offsetWidth; 
-        this.coreElement.classList.add('pulse');
+        this.coreElement.classList.add('squash');
     },
 
     updateCoreStateClass() {
@@ -109,8 +121,6 @@ export const FeedbackSystem = {
             this.coreElement.classList.add('breaking-state');
         } else if (enemy) {
             this.coreElement.style.setProperty('--core-base', enemy.color);
-            
-            // Aplica filtro de Boss Phase se houver
             if (enemy.type === "BOSS" && enemy.phases[enemy.currentPhaseIndex]) {
                 const p = enemy.phases[enemy.currentPhaseIndex];
                 if (p.bgMod) this.coreElement.style.filter = p.bgMod;
@@ -139,17 +149,18 @@ export const FeedbackSystem = {
         }
     },
 
-    spawnTextPop(textStr, color) {
+    spawnTextPop(textStr, color, size = "3rem") {
         if (!this.container) return;
         const text = document.createElement('div');
         text.classList.add('floating-break-text');
         text.innerText = textStr;
         text.style.color = color;
+        text.style.fontSize = size;
         text.style.textShadow = `0 0 20px ${color}`;
-        text.style.left = "50%"; text.style.top = "50%";
+        text.style.left = "50%"; text.style.top = "40%";
         text.style.transform = "translate(-50%, -50%)";
         this.container.appendChild(text);
-        setTimeout(() => text.remove(), 1000);
+        setTimeout(() => text.remove(), 1200);
     },
 
     spawnFloatingDamage(data) {
@@ -172,7 +183,7 @@ export const FeedbackSystem = {
                 floatEl.style.transform = "scale(1.2)";
             } else if (data.isCrit) {
                 floatEl.style.color = "#ffaa00";
-                prefix = "Cr!t ";
+                prefix = "Crít ";
             }
         }
         
