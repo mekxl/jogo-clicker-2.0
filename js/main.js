@@ -9,27 +9,28 @@ import { ChallengeSystem } from './endgame/ChallengeSystem.js';
 import { CodexSystem } from './endgame/CodexSystem.js';
 import { EventBus } from './core/EventBus.js';
 
-FeedbackSystem.init();
-AudioSystem.init();
-UIManager.init();
-UpgradeSystem.init();
+try {
+    FeedbackSystem.init();
+    AudioSystem.init();
+    UIManager.init();
+    UpgradeSystem.init();
 
-ChallengeSystem.init();
-CodexSystem.init();
+    ChallengeSystem.init();
+    CodexSystem.init();
 
-SaveSystem.load();
+    SaveSystem.load();
+} catch (e) {
+    console.error("Erro na inicialização dos sistemas:", e);
+}
 
 const coreElement = document.getElementById('the-core');
 const tutorial = document.getElementById('tutorial-text');
 
-// Função extraída para suportar múltiplos bindings
 const handleCoreClick = (event) => {
-    // Previne comportamento padrão duplo em touch
     if (event.type === 'touchstart') event.preventDefault(); 
     
-    // Suporta tanto toques de tela (touches[0]) quanto clique de mouse
-    let x = event.clientX;
-    let y = event.clientY;
+    let x = event.clientX || 0;
+    let y = event.clientY || 0;
     
     if (event.touches && event.touches.length > 0) {
         x = event.touches[0].clientX;
@@ -39,8 +40,10 @@ const handleCoreClick = (event) => {
     DamageSystem.processClickDamage({ x, y });
 };
 
-coreElement.addEventListener('pointerdown', handleCoreClick);
-coreElement.addEventListener('touchstart', handleCoreClick, { passive: false });
+if (coreElement) {
+    coreElement.addEventListener('pointerdown', handleCoreClick);
+    coreElement.addEventListener('touchstart', handleCoreClick, { passive: false });
+}
 
 EventBus.on("damage", () => {
     if (tutorial && !tutorial.classList.contains('hidden')) {
@@ -49,12 +52,19 @@ EventBus.on("damage", () => {
 });
 
 const restartBtn = document.getElementById('btn-restart');
-restartBtn.addEventListener('click', () => {
-    RunManager.restartRun();
-});
+if (restartBtn) {
+    restartBtn.addEventListener('click', () => {
+        RunManager.restartRun();
+    });
+}
 
 window.addEventListener('beforeunload', () => {
     SaveSystem.save();
 });
 
-RunManager.startRun();
+try {
+    RunManager.startRun();
+} catch (e) {
+    console.error("FATAL ERROR ON START RUN:", e);
+    if(tutorial) tutorial.innerText = "ERRO CRÍTICO NO CONSOLE. VERIFIQUE SEUS ARQUIVOS.";
+}
