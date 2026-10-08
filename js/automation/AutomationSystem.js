@@ -7,12 +7,16 @@ import { FrenzySystem } from '../feedback/FrenzySystem.js';
 export const AutomationSystem = {
     timer: null,
     lastTick: 0,
+    boundTick: null,
 
     start() {
         if (this.timer) cancelAnimationFrame(this.timer);
         this.lastTick = performance.now();
-        this.tick = this.tick.bind(this);
-        this.timer = requestAnimationFrame(this.tick);
+        
+        // Cacheia a função ligada (bind) para evitar vazamento de memória a cada restart
+        if (!this.boundTick) this.boundTick = this.tick.bind(this);
+        
+        this.timer = requestAnimationFrame(this.boundTick);
     },
 
     stop() {
@@ -25,7 +29,7 @@ export const AutomationSystem = {
     tick(now) {
         if (!GameState.run.isRunActive || GameState.run.isPaused) {
             this.lastTick = now;
-            this.timer = requestAnimationFrame(this.tick);
+            this.timer = requestAnimationFrame(this.boundTick);
             return;
         }
 
@@ -37,17 +41,15 @@ export const AutomationSystem = {
 
         for (const [id, instance] of Object.entries(activeBots)) {
             instance.timer += delta;
-            
             const effectiveInterval = instance.baseInterval / autoSpeedMult;
 
             if (instance.timer >= effectiveInterval) {
-                // Mantém o resto para não perder precisão rítmica em framerates baixos
                 instance.timer -= effectiveInterval; 
                 this.fireEntity(id, instance);
             }
         }
 
-        this.timer = requestAnimationFrame(this.tick);
+        this.timer = requestAnimationFrame(this.boundTick);
     },
 
     grantAutomation(id, amount = 1) {
