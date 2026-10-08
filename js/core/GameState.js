@@ -6,6 +6,13 @@ export const GameState = {
         bossesDefeated: 0,
         totalBossDamage: 0,
         fragmentsOfVoid: 0,
+        
+        runsPlayed: 0,
+        runsWon: 0,
+        highestAscensionUnlocked: 0,
+        currentAscensionSelection: 0,
+        totalEventsResolved: 0,
+
         metaUpgrades: {
             startingDamage: 0,
             energyReserve: 0,
@@ -18,6 +25,13 @@ export const GameState = {
             screenShakeEnabled: true,
             sfxEnabled: true,
             sfxVolume: 0.5
+        },
+        challenges: {}, // { challengeId: true }
+        codex: {
+            enemies: {},
+            relics: {},
+            upgrades: {},
+            events: {}
         }
     },
     run: {},
@@ -41,6 +55,10 @@ export const GameState = {
             enemiesDefeated: 0,
             bossesDefeated: 0,
             totalBreaks: 0,
+            merchantHealsUsed: 0,
+            frenzyActivations: 0,
+            
+            ascensionLevel: this.meta.currentAscensionSelection || 0,
             
             eventState: "NONE",
             merchantState: "NONE",
