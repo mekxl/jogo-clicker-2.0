@@ -11,6 +11,7 @@ export const RunManager = {
         GameState.resetRunState();
         ModifierSystem.recalculateStats();
         
+        GameState.meta.runsPlayed++;
         GameState.run.energy = GameState.meta.metaUpgrades.energyReserve * 10;
         GameState.run.isRunActive = true;
         
@@ -23,7 +24,7 @@ export const RunManager = {
         EventBus.emit("stateUpdated");
     },
     
-    endRun() {
+    endRun(isVictory = false) {
         if(!GameState.run.isRunActive) return;
         GameState.run.isRunActive = false;
         
@@ -33,15 +34,28 @@ export const RunManager = {
         const stats = GameState.run.stats;
         let fovGained = Math.floor(GameState.run.totalDamage / 50) + Math.floor(GameState.run.totalClicks / 10);
         fovGained = Math.floor(fovGained * stats.fovBonus);
+        
+        // Bonus Vitoria + Ascension
+        if (isVictory) {
+            GameState.meta.runsWon++;
+            fovGained += 1000; 
+            
+            // Tenta desbloquear nova ascension
+            if (GameState.run.ascensionLevel === GameState.meta.highestAscensionUnlocked) {
+                GameState.meta.highestAscensionUnlocked++;
+            }
+            EventBus.emit("runVictory", { runState: GameState.run, fovGained });
+        } else {
+            EventBus.emit("runEnded", { runState: GameState.run, fovGained });
+        }
 
         GameState.meta.fragmentsOfVoid += fovGained;
         
         SaveSystem.save();
-        EventBus.emit("runEnded", { runState: GameState.run, fovGained });
     },
 
     restartRun() {
-        this.endRun();
+        if (GameState.run.isRunActive) this.endRun(false); // Se desistiu
         this.startRun();
     }
 };
