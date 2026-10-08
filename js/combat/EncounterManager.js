@@ -19,6 +19,8 @@ export const EncounterManager = {
 
     advanceNode() {
         if (!GameState.run.isRunActive) return;
+        GameState.run.isTransitioning = false; // Garante que o input destrave a cada novo nodo
+        
         GameState.run.encounterIndex++;
         const node = GameState.run.encounterIndex;
 
@@ -69,7 +71,7 @@ export const EncounterManager = {
         
         setTimeout(() => {
             if (!GameState.run.isRunActive) return;
-            GameState.run.isTransitioning = false; // Destrava e decide
+            GameState.run.isTransitioning = false; // Libera a trava
             
             if (enemy.type === "BOSS") {
                 this.grantBossRewards(enemy);
@@ -78,7 +80,7 @@ export const EncounterManager = {
             } else {
                 this.advanceNode();
             }
-        }, 1200); // Antecipação / Dramatização da morte
+        }, 1200); 
     },
 
     grantBossRewards(boss) {
@@ -106,7 +108,7 @@ export const EncounterManager = {
             } else {
                 this.advanceNode();
             }
-        }, 3000); // Exibe loot do boss por 3s antes de continuar
+        }, 3000); 
     }
 };
 
