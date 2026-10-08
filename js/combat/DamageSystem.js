@@ -1,6 +1,7 @@
 import { GameState } from '../core/GameState.js';
 import { EnemySystem } from './EnemySystem.js';
 import { BreakSystem } from './BreakSystem.js';
+import { BossSystem } from './BossSystem.js';
 import { CurrencySystem } from '../progression/CurrencySystem.js';
 import { ComboSystem } from './ComboSystem.js';
 import { EventBus } from '../core/EventBus.js';
@@ -10,7 +11,6 @@ import { NumberSystem } from '../core/NumberSystem.js';
 import { FrenzySystem } from '../feedback/FrenzySystem.js';
 
 export const DamageSystem = {
-    // Processa clique manual do Jogador
     processClickDamage(clickEventData) {
         if (!GameState.run.isRunActive || GameState.run.isPaused) return;
         const target = EnemySystem.getActiveEnemy();
@@ -33,19 +33,26 @@ export const DamageSystem = {
         if (isCrit) finalDamage *= stats.critMultiplier;
 
         finalDamage *= stats.globalMultiplier;
+        
+        if (target.type === "BOSS") {
+            finalDamage *= BossSystem.getDamageMultiplier();
+        }
+
         if (target.state === "BREAKING") finalDamage *= stats.breakMultiplier;
 
         finalDamage = NumberSystem.sanitizeNumber(finalDamage);
         if (finalDamage < 1) finalDamage = 1;
 
         const isDefeated = EnemySystem.takeDamage(finalDamage);
-        BreakSystem.takeBreakDamage(stats.breakDamage); 
+        
+        let finalBreakDmg = stats.breakDamage;
+        if (target.type === "BOSS") finalBreakDmg *= BossSystem.getBreakMultiplier();
+        BreakSystem.takeBreakDamage(finalBreakDmg); 
 
-        // Update run stats
         GameState.run.totalDamage += finalDamage;
         if (finalDamage > GameState.meta.highestDamageHit) GameState.meta.highestDamageHit = finalDamage;
+        if (target.type === "BOSS") GameState.meta.totalBossDamage = (GameState.meta.totalBossDamage || 0) + finalDamage;
 
-        // Feedback System Triggers
         FrenzySystem.addFrenzy(isCrit ? 3 : 1);
 
         let energyGain = stats.energyPerClick;
@@ -70,7 +77,6 @@ export const DamageSystem = {
         if (isDefeated) this.handleDefeat(target);
     },
 
-    // Processa dano originado da Automação (Drones) sem estourar combo
     processAutoDamage(baseAmount, sourceId) {
         if (!GameState.run.isRunActive || GameState.run.isPaused) return;
         const target = EnemySystem.getActiveEnemy();
@@ -79,18 +85,19 @@ export const DamageSystem = {
         const stats = GameState.run.stats;
         let finalDamage = baseAmount * stats.autoDamageMult;
         
-        let isCrit = Math.random() < stats.critChance; // Auto pode critar
+        let isCrit = Math.random() < stats.critChance; 
         if (isCrit) finalDamage *= stats.critMultiplier;
 
         finalDamage *= stats.globalMultiplier;
+        if (target.type === "BOSS") finalDamage *= BossSystem.getDamageMultiplier();
         if (target.state === "BREAKING") finalDamage *= stats.breakMultiplier;
 
         finalDamage = NumberSystem.sanitizeNumber(finalDamage);
         if (finalDamage < 1) finalDamage = 1;
 
         const isDefeated = EnemySystem.takeDamage(finalDamage);
-        
         GameState.run.totalDamage += finalDamage;
+        if (target.type === "BOSS") GameState.meta.totalBossDamage = (GameState.meta.totalBossDamage || 0) + finalDamage;
 
         EventBus.emit("damage", { 
             amount: finalDamage, 
@@ -102,13 +109,18 @@ export const DamageSystem = {
         });
         
         EventBus.emit("stateUpdated");
-
         if (isDefeated) this.handleDefeat(target);
     },
 
     handleDefeat(target) {
         GameState.meta.enemiesDefeated++;
         GameState.run.enemiesDefeated = (GameState.run.enemiesDefeated || 0) + 1;
+        
+        if (target.type === "BOSS") {
+            GameState.meta.bossesDefeated++;
+            GameState.run.bossesDefeated = (GameState.run.bossesDefeated || 0) + 1;
+        }
+
         EventBus.emit("enemyDefeated", target);
     }
 };
