@@ -50,9 +50,7 @@ export const UIManager = {
             relicsList: document.getElementById('relics-list'),
             synergiesList: document.getElementById('synergies-list'),
             
-            endClicks: document.getElementById('end-clicks'),
-            endDmg: document.getElementById('end-dmg'),
-            endFov: document.getElementById('end-fov')
+            endStats: document.getElementById('end-stats')
         };
 
         EventBus.on("runStarted", () => {
@@ -67,9 +65,9 @@ export const UIManager = {
         EventBus.on("frenzyUpdated", () => this.updateFrenzyUI());
         EventBus.on("automationUpdated", () => this.updateAutomationUI());
         
-        EventBus.on("showUpgradeChoices", (choices) => this.showCardScreen(choices, "SELECT UPGRADE", false));
+        EventBus.on("showUpgradeChoices", (choices) => this.showCardScreen(choices, "SELECIONE UM UPGRADE", false));
         EventBus.on("upgradeApplied", () => this.els.upgradeModal.classList.add('hidden'));
-        EventBus.on("renderRelicChoices", (choices) => this.showCardScreen(choices, "RELIC DISCOVERED", true));
+        EventBus.on("renderRelicChoices", (choices) => this.showCardScreen(choices, "NOVA RELÍQUIA", true));
         EventBus.on("relicApplied", () => {
             this.els.upgradeModal.classList.add('hidden');
             this.updateRelicsPanel();
@@ -92,7 +90,6 @@ export const UIManager = {
         });
         document.getElementById('btn-close-meta').addEventListener('click', () => this.els.metaModal.classList.add('hidden'));
         
-        // Controle de Ascension no Menu de Meta
         document.getElementById('btn-ascension-down').addEventListener('click', () => {
             if(GameState.meta.currentAscensionSelection > 0) {
                 AscensionSystem.setAscension(GameState.meta.currentAscensionSelection - 1);
@@ -131,26 +128,26 @@ export const UIManager = {
         const fn = NumberSystem.formatNumber.bind(NumberSystem);
 
         if (r.eventState === "ACTIVE") {
-            this.els.enemyName.innerText = "UNKNOWN EVENT";
+            this.els.enemyName.innerText = "EVENTO DESCONHECIDO";
             this.els.enemyName.style.color = "#ff00ff";
             this.els.enemyPhase.innerText = "";
         } else if (r.merchantState === "ACTIVE") {
-            this.els.enemyName.innerText = "MERCHANT NODE";
+            this.els.enemyName.innerText = "MERCADOR ERRANTE";
             this.els.enemyName.style.color = "#bb88ff";
             this.els.enemyPhase.innerText = "";
         } else if (enemy && r.merchantState === "NONE" && r.eventState === "NONE") {
-            this.els.enemyName.innerText = enemy.type === "BOSS" ? `[BOSS] ${enemy.name}` : enemy.name;
+            this.els.enemyName.innerText = enemy.type === "BOSS" ? `[CHEFE] ${enemy.name}` : enemy.name;
             this.els.enemyName.style.color = enemy.color;
             this.els.hp.innerText = `${fn(enemy.currentHP)}/${fn(enemy.maxHP)}`;
             
             if (enemy.type === "BOSS" && enemy.phases[enemy.currentPhaseIndex]) {
-                this.els.enemyPhase.innerText = `Phase ${enemy.currentPhaseIndex + 1}: ${enemy.phases[enemy.currentPhaseIndex].name}`;
+                this.els.enemyPhase.innerText = `Fase ${enemy.currentPhaseIndex + 1}: ${enemy.phases[enemy.currentPhaseIndex].name}`;
                 this.els.enemyPhase.style.color = "#ff0000";
             } else {
                 this.els.enemyPhase.innerText = "";
             }
 
-            if(enemy.state === "BREAKING") this.els.break.innerText = "VULNERABLE!";
+            if(enemy.state === "BREAKING") this.els.break.innerText = "VULNERÁVEL!";
             else this.els.break.innerText = `${fn(enemy.breakCurrent)}/${fn(enemy.breakMax)}`;
         }
 
@@ -166,16 +163,15 @@ export const UIManager = {
     },
 
     updateAscensionUI() {
-        document.getElementById('ui-ascension-label').innerText = `ASCENSION ${GameState.meta.currentAscensionSelection}`;
+        document.getElementById('ui-ascension-label').innerText = `ASCENSÃO ${GameState.meta.currentAscensionSelection}`;
     },
 
     showChallengeToast(id) {
         const ch = CHALLENGES.find(c => c.id === id);
         if (!ch) return;
-        
         const toast = document.createElement('div');
         toast.className = 'challenge-toast float-up-anim';
-        toast.innerHTML = `<strong>CHALLENGE COMPLETED</strong><br>${ch.name}<br><span style="font-size: 0.7rem;">+${ch.rewardFov} FoV</span>`;
+        toast.innerHTML = `<strong>CONQUISTA DESBLOQUEADA</strong><br>${ch.name}<br><span style="font-size: 0.7rem;">+${ch.rewardFov} Fragmentos</span>`;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 4000);
     },
@@ -205,16 +201,31 @@ export const UIManager = {
     showCardScreen(choices, titleText, isRelic) {
         this.els.modalTitle.innerText = titleText;
         this.els.upgradeContainer.innerHTML = '';
-        choices.forEach(item => {
-            const rarityInfo = UPGRADE_RARITIES[item.rarity] || { color: "#fff" };
+        
+        choices.forEach((item, idx) => {
+            const rarityInfo = UPGRADE_RARITIES[item.rarity] || { color: "#fff", label: "Desconhecido" };
             const card = document.createElement('div');
             card.className = 'card';
             card.style.borderColor = rarityInfo.color;
-            let extraInfo = isRelic ? (item.unique ? "UNIQUE" : `Max Stacks: ${item.stackLimit}`) : "";
+            
+            // ANIMAÇÃO DE REVELAÇÃO EM CASCATA & INPUT LOCK ANTI-MISSCLICK
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.2s';
+            card.style.pointerEvents = 'none';
+
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+                setTimeout(() => { card.style.pointerEvents = 'auto'; }, 300);
+            }, 150 * idx + 200);
+            
+            let extraInfo = isRelic ? (item.unique ? "ÚNICO" : `Máx. Acúmulos: ${item.stackLimit}`) : "";
             let tagsHtml = item.tags ? `<div class="tags">${item.tags.join(' ')}</div>` : "";
+            
             card.innerHTML = `
                 <h3 style="color: ${rarityInfo.color}">${item.name}</h3>
-                <div class="rarity" style="color: ${rarityInfo.color}">${item.rarity}</div>
+                <div class="rarity" style="color: ${rarityInfo.color}">${rarityInfo.label}</div>
                 <div class="desc">${item.description}</div>
                 <div style="font-size: 0.7rem; color:#888; margin-bottom: 5px;">${extraInfo}</div>
                 ${tagsHtml}
@@ -222,11 +233,11 @@ export const UIManager = {
             card.addEventListener('click', () => {
                 if(isRelic) {
                     RelicSystem.addRelic(item.id);
-                    EventBus.emit("relicApplied", item.id); // Para Codex
+                    EventBus.emit("relicApplied", item.id); 
                 }
                 else {
                     UpgradeSystem.selectUpgrade(item.id);
-                    EventBus.emit("upgradeApplied", item.id); // Para Codex
+                    EventBus.emit("upgradeApplied", item.id);
                 }
             });
             this.els.upgradeContainer.appendChild(card);
@@ -238,9 +249,20 @@ export const UIManager = {
         this.els.eventTitle.innerText = eventData.name;
         this.els.eventDesc.innerText = eventData.description;
         this.els.eventChoices.innerHTML = '';
-        eventData.choices.forEach(choice => {
+        eventData.choices.forEach((choice, idx) => {
             const btn = document.createElement('div');
             btn.className = 'event-choice-btn';
+            
+            btn.style.opacity = '0';
+            btn.style.transform = 'translateY(20px)';
+            btn.style.transition = 'opacity 0.3s, transform 0.3s, background 0.2s';
+            btn.style.pointerEvents = 'none';
+            setTimeout(() => {
+                btn.style.opacity = '1';
+                btn.style.transform = 'translateY(0)';
+                setTimeout(() => { btn.style.pointerEvents = 'auto'; }, 300);
+            }, 100 * idx + 200);
+
             let reqText = "";
             let disabled = false;
             if (choice.requirements) {
@@ -250,7 +272,7 @@ export const UIManager = {
                 }
             }
             if (disabled) btn.classList.add('disabled');
-            let riskHtml = choice.risk ? `<div class="event-risk-label">RISK: ${choice.risk.probability * 100}%</div>` : "";
+            let riskHtml = choice.risk ? `<div class="event-risk-label">RISCO: ${choice.risk.probability * 100}%</div>` : "";
             btn.innerHTML = `<h4>${choice.label}${reqText}</h4><p>${choice.description}</p>${riskHtml}`;
             if (!disabled) {
                 btn.addEventListener('click', () => {
@@ -265,17 +287,28 @@ export const UIManager = {
 
     showMerchantModal(data) {
         this.els.merchantItems.innerHTML = '';
-        document.getElementById('btn-merchant-reroll').innerText = `REROLL (${data.rerollCost} ENG)`;
+        document.getElementById('btn-merchant-reroll').innerText = `REROLAR (${data.rerollCost} ENG)`;
         if (GameState.run.energy < data.rerollCost) document.getElementById('btn-merchant-reroll').classList.add('disabled');
         else document.getElementById('btn-merchant-reroll').classList.remove('disabled');
 
-        data.items.forEach(item => {
+        data.items.forEach((item, idx) => {
             const card = document.createElement('div');
             card.className = 'card merchant-card';
+            
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.pointerEvents = 'none';
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+                setTimeout(() => { card.style.pointerEvents = 'auto'; }, 300);
+            }, 150 * idx + 200);
+
             if (item.purchased) card.classList.add('disabled');
             let color = item.type === "RELIC" ? "#ffaa00" : (item.rarity ? UPGRADE_RARITIES[item.rarity].color : "#aaa");
             card.style.borderColor = color;
-            card.innerHTML = `<h3 style="color: ${color}">${item.name}</h3><div class="desc" style="margin-top:10px;">${item.description}</div><div class="cost-tag">${item.purchased ? "SOLD OUT" : item.cost + " ENG"}</div>`;
+            card.innerHTML = `<h3 style="color: ${color}">${item.name}</h3><div class="desc" style="margin-top:10px;">${item.description}</div><div class="cost-tag">${item.purchased ? "ESGOTADO" : item.cost + " ENG"}</div>`;
             if (!item.purchased && GameState.run.energy >= item.cost) {
                 card.addEventListener('click', () => import('../events/MerchantSystem.js').then(m => m.MerchantSystem.buyItem(item.uid)));
             } else if (!item.purchased) card.style.opacity = "0.5";
@@ -299,13 +332,18 @@ export const UIManager = {
     updateMetaUI() {
         this.els.fov.innerText = NumberSystem.formatNumber(GameState.meta.fragmentsOfVoid);
         this.els.metaContainer.innerHTML = '';
+        const metaDict = {
+            startingDamage: "Dano Inicial", energyReserve: "Reserva de Energia",
+            luck: "Sorte (Bônus de Raridade)", knowledge: "Conhecimento (FoV Bônus)",
+            resistance: "Resistência Base"
+        };
         for (const [id, upgData] of Object.entries(MetaProgression.upgrades)) {
             const lvl = GameState.meta.metaUpgrades[id];
             const cost = MetaProgression.getCost(id);
             const canAfford = GameState.meta.fragmentsOfVoid >= cost && lvl < upgData.maxLvl;
             const div = document.createElement('div');
             div.className = 'meta-item';
-            div.innerHTML = `<div><strong>${upgData.name}</strong> (Lvl ${lvl}/${upgData.maxLvl})<br><span style="font-size:0.8rem; color:#aaa">Cost: ${cost} FoV</span></div><button ${!canAfford ? 'disabled' : ''}>UPGRADE</button>`;
+            div.innerHTML = `<div><strong>${metaDict[id] || upgData.name}</strong> (Lvl ${lvl}/${upgData.maxLvl})<br><span style="font-size:0.8rem; color:#aaa">Custo: ${cost} FV</span></div><button ${!canAfford ? 'disabled' : ''}>MELHORAR</button>`;
             div.querySelector('button').addEventListener('click', () => MetaProgression.buyUpgrade(id));
             this.els.metaContainer.appendChild(div);
         }
@@ -313,16 +351,25 @@ export const UIManager = {
 
     showGameOver(data, isVictory) {
         const fn = NumberSystem.formatNumber.bind(NumberSystem);
-        this.els.gameOverTitle.innerText = isVictory ? "RUN VICTORY" : "RUN ENDED";
+        this.els.gameOverTitle.innerText = isVictory ? "VITÓRIA!" : "SISTEMA DESCONECTADO";
         this.els.gameOverTitle.style.color = isVictory ? "#ffaa00" : "var(--core-base)";
         
-        document.getElementById('end-clicks').innerText = fn(data.runState.totalClicks);
-        document.getElementById('end-dmg').innerText = fn(data.runState.totalDamage);
-        document.getElementById('end-fov').innerText = fn(data.fovGained);
+        let relicsObtained = Object.keys(data.runState.activeRelics).length;
+        let upgradesGot = 0;
+        for(let key in data.runState.activeUpgrades) upgradesGot += data.runState.activeUpgrades[key];
+
+        this.els.endStats.innerHTML = `
+            <p><strong>Dano Total:</strong> ${fn(data.runState.totalDamage)}</p>
+            <p><strong>Combo Máximo:</strong> ${fn(data.runState.maxCombo)}</p>
+            <p><strong>Inimigos Vencidos:</strong> ${fn(data.runState.enemiesDefeated)}</p>
+            <p><strong>Relíquias Coletadas:</strong> ${relicsObtained}</p>
+            <p><strong>Upgrades Comprados:</strong> ${upgradesGot}</p>
+            <hr style="border-color:#333; margin:10px 0;">
+            <p class="text-fov" style="font-size: 1.2rem;">+${fn(data.fovGained)} Fragmentos do Vazio</p>
+        `;
         
-        // Se desbloqueou Ascension
         if (isVictory) {
-            document.getElementById('end-fov').innerHTML += `<br><span style="color:#00ccff">Ascension Unlocked!</span>`;
+            this.els.endStats.innerHTML += `<br><span style="color:#00ccff; font-weight:bold;">NÍVEL DE ASCENSÃO DESBLOQUEADO!</span>`;
         }
 
         this.updateMetaUI(); 
