@@ -22,14 +22,26 @@ SaveSystem.load();
 const coreElement = document.getElementById('the-core');
 const tutorial = document.getElementById('tutorial-text');
 
-coreElement.addEventListener('pointerdown', (event) => {
-    DamageSystem.processClickDamage({
-        x: event.clientX,
-        y: event.clientY
-    });
-});
+// Função extraída para suportar múltiplos bindings
+const handleCoreClick = (event) => {
+    // Previne comportamento padrão duplo em touch
+    if (event.type === 'touchstart') event.preventDefault(); 
+    
+    // Suporta tanto toques de tela (touches[0]) quanto clique de mouse
+    let x = event.clientX;
+    let y = event.clientY;
+    
+    if (event.touches && event.touches.length > 0) {
+        x = event.touches[0].clientX;
+        y = event.touches[0].clientY;
+    }
 
-// Remove a instrução visual no primeiro dano efetivo, polindo o onboarding
+    DamageSystem.processClickDamage({ x, y });
+};
+
+coreElement.addEventListener('pointerdown', handleCoreClick);
+coreElement.addEventListener('touchstart', handleCoreClick, { passive: false });
+
 EventBus.on("damage", () => {
     if (tutorial && !tutorial.classList.contains('hidden')) {
         tutorial.classList.add('hidden');
