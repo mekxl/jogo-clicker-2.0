@@ -43,12 +43,17 @@
 
     <div class="meta-bar">
         <span>FRAGMENTS OF VOID: <span id="ui-fov" class="text-fov">0</span></span>
-        <button id="btn-open-meta" class="small-btn">META PROGRESSION</button>
+        <div>
+            <button id="btn-open-settings" class="small-btn">SETTINGS</button>
+            <button id="btn-open-meta" class="small-btn">META PROGRESSION</button>
+        </div>
     </div>
 
     <div class="main-layout">
         <aside id="relics-panel" class="relics-sidebar">
-            <h3>ACTIVE RELICS</h3>
+            <h3>AUTOMATION</h3>
+            <div id="automation-panel" class="automation-list"></div>
+            <h3 style="margin-top: 20px;">ACTIVE RELICS</h3>
             <div id="relics-list" class="relics-list"></div>
             <h3 style="margin-top: 20px;">SYNERGIES</h3>
             <div id="synergies-list" class="synergies-list"></div>
@@ -57,6 +62,7 @@
         <main class="center-stage">
             <div id="core-container">
                 <div id="the-core"></div>
+                <div class="frenzy-bar"><div id="frenzy-fill" class="frenzy-fill"></div></div>
             </div>
         </main>
     </div>
@@ -67,14 +73,12 @@
         <div id="upgrade-choices-container" class="cards-container"></div>
     </div>
     
-    <!-- EVENT MODAL -->
     <div id="event-modal" class="overlay hidden">
         <h1 id="event-title" style="color: #ff00ff; letter-spacing: 3px;">UNKNOWN EVENT</h1>
         <p id="event-desc" style="max-width: 600px; text-align: center; margin-bottom: 2rem; color: #ccc;"></p>
         <div id="event-choices" class="event-choices-container"></div>
     </div>
 
-    <!-- MERCHANT MODAL -->
     <div id="merchant-modal" class="overlay hidden">
         <h1 style="color: #bb88ff; letter-spacing: 3px;">WANDERING MERCHANT</h1>
         <p style="color: #ccc; margin-bottom: 2rem;">Trade Energy for powerful assets.</p>
@@ -85,9 +89,18 @@
         </div>
     </div>
 
+    <div id="settings-modal" class="overlay hidden">
+        <h2>SETTINGS</h2>
+        <div class="list-container">
+            <label class="meta-item"><input type="checkbox" id="toggle-particles"> Enable Particles</label>
+            <label class="meta-item"><input type="checkbox" id="toggle-shake"> Enable Screen Shake</label>
+            <label class="meta-item"><input type="checkbox" id="toggle-sfx"> Enable Sound Effects</label>
+        </div>
+        <button id="btn-close-settings" class="close-btn">SAVE & CLOSE</button>
+    </div>
+
     <div id="meta-modal" class="overlay hidden">
         <h2>META PROGRESSION</h2>
-        <p>Gaste Fragments of Void para melhorias permanentes.</p>
         <div id="meta-upgrades-container" class="list-container"></div>
         <button id="btn-close-meta" class="close-btn">FECHAR</button>
     </div>
