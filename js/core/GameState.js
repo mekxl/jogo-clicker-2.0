@@ -4,6 +4,7 @@ export const GameState = {
         highestDamageHit: 0,
         enemiesDefeated: 0,
         bossesDefeated: 0,
+        totalBossDamage: 0,
         fragmentsOfVoid: 0,
         metaUpgrades: {
             startingDamage: 0,
@@ -35,8 +36,10 @@ export const GameState = {
             totalDamage: 0,
             
             encounterIndex: 0,
+            zoneIndex: 1,
             combatCount: 0,
             enemiesDefeated: 0,
+            bossesDefeated: 0,
             totalBreaks: 0,
             
             eventState: "NONE",
@@ -49,44 +52,17 @@ export const GameState = {
             activeSynergies: [], 
             milestoneIndex: 0,
 
-            // Novo: Integração de Frenzy e Automação
-            frenzy: {
-                isActive: false,
-                meter: 0
-            },
-            automation: {
-                activeEntities: {} // Armazena instâncias das automações
-            },
+            frenzy: { isActive: false, meter: 0 },
+            automation: { activeEntities: {} },
             
-            eventModifiers: {
-                baseDamage: 0,
-                comboEffectiveness: 0,
-                energyPerClick: 0
-            },
+            eventModifiers: { baseDamage: 0, comboEffectiveness: 0, energyPerClick: 0 },
             
             stats: {
-                damagePerClick: 1,
-                energyPerClick: 1,
-                critChance: 0.0,
-                critMultiplier: 1.5,
-                comboEffectiveness: 1.0,
-                globalMultiplier: 1.0,
-                fovBonus: 1.0,
-                breakDamage: 1,
-                breakMultiplier: 1.5,
-                breakDurationMs: 3000,
-                comboGlobalMod: 0,
-                comboCritBonus: 0,
-                comboEnergyBonus: 0,
-                critEnergyBonus: 0,
-                breakAutoCrit: 0,
-                luckBonus: 0,
-                
-                // Automation e Frenzy Stats
-                autoSpeedMult: 1.0,
-                autoDamageMult: 1.0,
-                frenzyMultiplierBonus: 2.0, // Frenzy base dobra o dano
-                frenzyDurationMs: 5000
+                damagePerClick: 1, energyPerClick: 1, critChance: 0.0, critMultiplier: 1.5,
+                comboEffectiveness: 1.0, globalMultiplier: 1.0, fovBonus: 1.0,
+                breakDamage: 1, breakMultiplier: 1.5, breakDurationMs: 3000,
+                comboGlobalMod: 0, comboCritBonus: 0, comboEnergyBonus: 0, critEnergyBonus: 0, breakAutoCrit: 0, luckBonus: 0,
+                autoSpeedMult: 1.0, autoDamageMult: 1.0, frenzyMultiplierBonus: 2.0, frenzyDurationMs: 5000
             }
         };
     }
