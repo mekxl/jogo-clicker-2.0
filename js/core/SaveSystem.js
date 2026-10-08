@@ -2,7 +2,7 @@ import { GameState } from './GameState.js';
 
 export const SaveSystem = {
     saveKey: 'BREAK_CORE_SAVE',
-    version: 1,
+    version: 2, // Bump para V2 (Migration Check)
 
     save() {
         const data = { 
@@ -17,19 +17,27 @@ export const SaveSystem = {
         if (savedData) {
             try {
                 const parsed = JSON.parse(savedData);
+                
+                // MIGRATION V1 -> V2
+                if (parsed.version === 1) {
+                    console.log("Migrating save V1 to V2...");
+                    parsed.meta.runsPlayed = 0;
+                    parsed.meta.runsWon = 0;
+                    parsed.meta.highestAscensionUnlocked = 0;
+                    parsed.meta.currentAscensionSelection = 0;
+                    parsed.meta.challenges = {};
+                    parsed.meta.codex = { enemies: {}, relics: {}, upgrades: {}, events: {} };
+                }
+
                 if (parsed.meta) {
-                    GameState.meta.totalClicks = parsed.meta.totalClicks || 0;
-                    GameState.meta.highestDamageHit = parsed.meta.highestDamageHit || 0;
-                    GameState.meta.fragmentsOfVoid = parsed.meta.fragmentsOfVoid || 0;
-                    GameState.meta.bossesDefeated = parsed.meta.bossesDefeated || 0;
-                    GameState.meta.totalBossDamage = parsed.meta.totalBossDamage || 0;
+                    // Deep merge simplificado para garantir chaves novas
+                    GameState.meta = { ...GameState.meta, ...parsed.meta };
                     
-                    if (parsed.meta.metaUpgrades) {
-                        GameState.meta.metaUpgrades = { ...GameState.meta.metaUpgrades, ...parsed.meta.metaUpgrades };
-                    }
-                    if (parsed.meta.settings) {
-                        GameState.meta.settings = { ...GameState.meta.settings, ...parsed.meta.settings };
-                    }
+                    // Garantir nested objects
+                    if (!GameState.meta.challenges) GameState.meta.challenges = {};
+                    if (!GameState.meta.codex) GameState.meta.codex = { enemies: {}, relics: {}, upgrades: {}, events: {} };
+                    if (!GameState.meta.metaUpgrades) GameState.meta.metaUpgrades = { startingDamage: 0, energyReserve: 0, luck: 0, knowledge: 0, resistance: 0 };
+                    if (!GameState.meta.settings) GameState.meta.settings = { particlesEnabled: true, screenShakeEnabled: true, sfxEnabled: true, sfxVolume: 0.5 };
                 }
             } catch (e) {
                 console.error("Save file corrupted.", e);
