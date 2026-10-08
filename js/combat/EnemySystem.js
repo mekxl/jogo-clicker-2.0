@@ -9,8 +9,8 @@ export const EnemySystem = {
 
     initEnemy(enemyData, level, isBoss = false) {
         if (!enemyData) {
-            console.error("EnemySystem: Falha ao carregar os dados do inimigo!");
-            return;
+            console.error("EnemySystem: Falha ao carregar os dados do inimigo. Criando inimigo de fallback.");
+            enemyData = { id: "fallback", name: "Anomalia", type: "BASIC", baseHP: 50, baseBreak: 10, color: "#fff", scale: 1.0 };
         }
 
         const zone = Math.ceil(level / 10);
@@ -24,8 +24,8 @@ export const EnemySystem = {
         }
 
         const ascMods = AscensionSystem.getActiveModifiers();
-        hpScale *= (ascMods ? ascMods.hpMult : 1);
-        breakScale *= (ascMods ? ascMods.breakMult : 1);
+        hpScale *= (ascMods ? ascMods.hpMult : 1.0);
+        breakScale *= (ascMods ? ascMods.breakMult : 1.0);
 
         const maxHP = Math.floor((enemyData.baseHp || enemyData.baseHP || 50) * hpScale);
         const maxBreak = Math.floor((enemyData.baseBreak || 10) * breakScale);
