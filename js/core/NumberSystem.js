@@ -7,7 +7,6 @@ export const NumberSystem = {
 
         let suffixNum = Math.floor(("" + Math.floor(safeVal)).length / 3);
         
-        // Proteção caso passe do limite do nosso array de sufixos
         if (suffixNum >= this.suffixes.length) {
             return safeVal.toExponential(2);
         }
@@ -20,12 +19,13 @@ export const NumberSystem = {
     },
 
     isValidNumber(value) {
-        return typeof value === 'number' && !isNaN(value) && isFinite(value);
+        // Auditoria Final: Segurança estrita contra Memory Corruption Numérica
+        return typeof value === 'number' && Number.isFinite(value) && !Number.isNaN(value);
     },
 
     sanitizeNumber(value) {
         if (!this.isValidNumber(value)) {
-            console.warn("NumberSystem bloqueou uma mutação inválida (NaN/Infinity). Retornando 0 para proteger a run.");
+            console.warn("NumberSystem bloqueou uma mutação inválida (NaN/Infinity). Retornando 0.");
             return 0;
         }
         return Math.max(0, value);
