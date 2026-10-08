@@ -8,8 +8,6 @@ import { AscensionSystem } from '../endgame/AscensionSystem.js';
 import { UPGRADE_RARITIES } from '../data/upgrades.js';
 import { EnemySystem } from '../combat/EnemySystem.js';
 import { RELICS, SYNERGIES } from '../data/relics.js';
-import { EventSystem } from '../events/EventSystem.js';
-import { MerchantSystem } from '../events/MerchantSystem.js';
 import { SaveSystem } from '../core/SaveSystem.js';
 import { CHALLENGES } from '../data/challenges.js';
 
@@ -78,10 +76,10 @@ export const UIManager = {
         
         EventBus.on("challengeCompleted", (id) => this.showChallengeToast(id));
 
-        document.getElementById('btn-merchant-reroll').addEventListener('click', () => MerchantSystem.reroll());
+        document.getElementById('btn-merchant-reroll').addEventListener('click', () => import('../events/MerchantSystem.js').then(m => m.MerchantSystem.reroll()));
         document.getElementById('btn-merchant-close').addEventListener('click', () => {
             this.els.merchantModal.classList.add('hidden');
-            MerchantSystem.closeMerchant();
+            import('../events/MerchantSystem.js').then(m => m.MerchantSystem.closeMerchant());
         });
 
         document.getElementById('btn-open-meta').addEventListener('click', () => {
@@ -136,11 +134,12 @@ export const UIManager = {
             this.els.enemyName.style.color = "#bb88ff";
             this.els.enemyPhase.innerText = "";
         } else if (enemy && r.merchantState === "NONE" && r.eventState === "NONE") {
-            this.els.enemyName.innerText = enemy.type === "BOSS" ? `[CHEFE] ${enemy.name}` : enemy.name;
+            const eName = enemy.name || "Inimigo"; // Fallback de nome seguro
+            this.els.enemyName.innerText = enemy.type === "BOSS" ? `[CHEFE] ${eName}` : eName;
             this.els.enemyName.style.color = enemy.color;
             this.els.hp.innerText = `${fn(enemy.currentHP)}/${fn(enemy.maxHP)}`;
             
-            if (enemy.type === "BOSS" && enemy.phases[enemy.currentPhaseIndex]) {
+            if (enemy.type === "BOSS" && enemy.phases && enemy.phases[enemy.currentPhaseIndex]) {
                 this.els.enemyPhase.innerText = `Fase ${enemy.currentPhaseIndex + 1}: ${enemy.phases[enemy.currentPhaseIndex].name}`;
                 this.els.enemyPhase.style.color = "#ff0000";
             } else {
@@ -163,7 +162,8 @@ export const UIManager = {
     },
 
     updateAscensionUI() {
-        document.getElementById('ui-ascension-label').innerText = `ASCENSÃO ${GameState.meta.currentAscensionSelection}`;
+        const el = document.getElementById('ui-ascension-label');
+        if (el) el.innerText = `ASCENSÃO ${GameState.meta.currentAscensionSelection}`;
     },
 
     showChallengeToast(id) {
@@ -208,7 +208,6 @@ export const UIManager = {
             card.className = 'card';
             card.style.borderColor = rarityInfo.color;
             
-            // ANIMAÇÃO DE REVELAÇÃO EM CASCATA & INPUT LOCK ANTI-MISSCLICK
             card.style.opacity = '0';
             card.style.transform = 'translateY(30px)';
             card.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.2s';
@@ -354,7 +353,7 @@ export const UIManager = {
         this.els.gameOverTitle.innerText = isVictory ? "VITÓRIA!" : "SISTEMA DESCONECTADO";
         this.els.gameOverTitle.style.color = isVictory ? "#ffaa00" : "var(--core-base)";
         
-        let relicsObtained = Object.keys(data.runState.activeRelics).length;
+        let relicsObtained = Object.keys(data.runState.activeRelics || {}).length;
         let upgradesGot = 0;
         for(let key in data.runState.activeUpgrades) upgradesGot += data.runState.activeUpgrades[key];
 
