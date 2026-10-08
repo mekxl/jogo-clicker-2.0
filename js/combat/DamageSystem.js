@@ -14,7 +14,6 @@ import { AscensionSystem } from '../endgame/AscensionSystem.js';
 export const DamageSystem = {
     processClickDamage(clickEventData) {
         if (!GameState.run.isRunActive || GameState.run.isPaused || GameState.run.isTransitioning) return;
-        
         const target = EnemySystem.getActiveEnemy();
         if (!target || (target.state !== "ACTIVE" && target.state !== "BREAKING")) return;
 
@@ -126,7 +125,6 @@ export const DamageSystem = {
             GameState.meta.bossesDefeated++;
             GameState.run.bossesDefeated = (GameState.run.bossesDefeated || 0) + 1;
         }
-
         EventBus.emit("enemyDefeated", target);
     }
 };
