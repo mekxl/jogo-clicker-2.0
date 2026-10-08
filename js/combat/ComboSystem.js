@@ -10,6 +10,12 @@ export const ComboSystem = {
         
         this.calculateMultiplier();
         EventBus.emit("comboChanged", GameState.run);
+
+        // Feedback de Milestones de Combo (Game Feel)
+        const c = GameState.run.currentCombo;
+        if ([10, 25, 50, 100, 200, 500, 1000].includes(c)) {
+            EventBus.emit("comboMilestone", c);
+        }
     },
 
     calculateMultiplier() {
