@@ -2,22 +2,26 @@ import { GameState } from '../core/GameState.js';
 import { EventBus } from '../core/EventBus.js';
 import { BreakSystem } from './BreakSystem.js';
 import { BossSystem } from './BossSystem.js';
+import { AscensionSystem } from '../endgame/AscensionSystem.js';
 
 export const EnemySystem = {
     activeEnemy: null,
 
     initEnemy(enemyData, level, isBoss = false) {
-        // Zonas de progressão. (1 a 10 = Zona 1, 11 a 20 = Zona 2, etc.)
         const zone = Math.ceil(level / 10);
         
         let hpScale = Math.pow(1.15, level - 1); 
         let breakScale = 1 + (level * 0.05);
 
-        // Scaling brutal para zonas avançadas
         if (zone > 1) {
             hpScale *= Math.pow(1.5, zone - 1);
             breakScale *= Math.pow(1.2, zone - 1);
         }
+
+        // Aplica modificadores de ASCENSION
+        const ascMods = AscensionSystem.getActiveModifiers();
+        hpScale *= ascMods.hpMult;
+        breakScale *= ascMods.breakMult;
 
         const maxHP = Math.floor(enemyData.baseHp || enemyData.baseHP * hpScale);
         const maxBreak = Math.floor(enemyData.baseBreak * breakScale);
