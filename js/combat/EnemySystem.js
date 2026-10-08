@@ -1,16 +1,25 @@
 import { GameState } from '../core/GameState.js';
 import { EventBus } from '../core/EventBus.js';
 import { BreakSystem } from './BreakSystem.js';
+import { BossSystem } from './BossSystem.js';
 
 export const EnemySystem = {
     activeEnemy: null,
 
-    initEnemy(enemyData, level) {
-        // Escalonamento Dinâmico (Configurado em BALANCE.md)
-        const hpScale = Math.pow(1.15, level - 1); 
-        const breakScale = 1 + (level * 0.05);
+    initEnemy(enemyData, level, isBoss = false) {
+        // Zonas de progressão. (1 a 10 = Zona 1, 11 a 20 = Zona 2, etc.)
+        const zone = Math.ceil(level / 10);
+        
+        let hpScale = Math.pow(1.15, level - 1); 
+        let breakScale = 1 + (level * 0.05);
 
-        const maxHP = Math.floor(enemyData.baseHP * hpScale);
+        // Scaling brutal para zonas avançadas
+        if (zone > 1) {
+            hpScale *= Math.pow(1.5, zone - 1);
+            breakScale *= Math.pow(1.2, zone - 1);
+        }
+
+        const maxHP = Math.floor(enemyData.baseHp || enemyData.baseHP * hpScale);
         const maxBreak = Math.floor(enemyData.baseBreak * breakScale);
 
         this.activeEnemy = {
@@ -19,9 +28,15 @@ export const EnemySystem = {
             currentHP: maxHP,
             breakMax: maxBreak,
             breakCurrent: maxBreak,
-            state: "ACTIVE", // Estados: SPAWNING, ACTIVE, BREAKING, DEFEATED
-            level: level
+            state: "ACTIVE",
+            level: level,
+            type: isBoss ? "BOSS" : (enemyData.type || "BASIC")
         };
+
+        if (isBoss) {
+            this.activeEnemy.currentPhaseIndex = 0;
+            this.activeEnemy.activePhaseId = this.activeEnemy.phases[0].id;
+        }
         
         GameState.run.currentHP = maxHP;
         GameState.run.maxHP = maxHP;
@@ -36,7 +51,6 @@ export const EnemySystem = {
 
     takeDamage(amount) {
         if (!this.activeEnemy) return false;
-        // Anti-exploit de spam de cliques após morte
         if (this.activeEnemy.state === "DEFEATED" || this.activeEnemy.state === "SPAWNING") return false;
 
         this.activeEnemy.currentHP -= amount;
@@ -47,10 +61,15 @@ export const EnemySystem = {
             GameState.run.currentHP = 0;
             
             BreakSystem.cancelBreakTimer();
-            return true; // Retorna true EXATAMENTE 1 vez na morte
+            return true;
         }
         
         GameState.run.currentHP = this.activeEnemy.currentHP;
+        
+        if (this.activeEnemy.type === "BOSS") {
+            BossSystem.checkPhaseTransition();
+        }
+
         return false;
     }
 };
