@@ -9,6 +9,7 @@ import { RewardSystem } from '../progression/RewardSystem.js';
 import { ModifierSystem } from '../core/ModifierSystem.js';
 import { NumberSystem } from '../core/NumberSystem.js';
 import { FrenzySystem } from '../feedback/FrenzySystem.js';
+import { AscensionSystem } from '../endgame/AscensionSystem.js';
 
 export const DamageSystem = {
     processClickDamage(clickEventData) {
@@ -33,6 +34,10 @@ export const DamageSystem = {
         if (isCrit) finalDamage *= stats.critMultiplier;
 
         finalDamage *= stats.globalMultiplier;
+        
+        // Ascension Damage Reduction Mod
+        const ascMods = AscensionSystem.getActiveModifiers();
+        finalDamage *= ascMods.dmgReduction;
         
         if (target.type === "BOSS") {
             finalDamage *= BossSystem.getDamageMultiplier();
@@ -89,6 +94,10 @@ export const DamageSystem = {
         if (isCrit) finalDamage *= stats.critMultiplier;
 
         finalDamage *= stats.globalMultiplier;
+        
+        const ascMods = AscensionSystem.getActiveModifiers();
+        finalDamage *= ascMods.dmgReduction;
+
         if (target.type === "BOSS") finalDamage *= BossSystem.getDamageMultiplier();
         if (target.state === "BREAKING") finalDamage *= stats.breakMultiplier;
 
