@@ -21,6 +21,8 @@ export const SaveSystem = {
                     GameState.meta.totalClicks = parsed.meta.totalClicks || 0;
                     GameState.meta.highestDamageHit = parsed.meta.highestDamageHit || 0;
                     GameState.meta.fragmentsOfVoid = parsed.meta.fragmentsOfVoid || 0;
+                    GameState.meta.bossesDefeated = parsed.meta.bossesDefeated || 0;
+                    GameState.meta.totalBossDamage = parsed.meta.totalBossDamage || 0;
                     
                     if (parsed.meta.metaUpgrades) {
                         GameState.meta.metaUpgrades = { ...GameState.meta.metaUpgrades, ...parsed.meta.metaUpgrades };
