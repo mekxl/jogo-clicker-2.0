@@ -8,9 +8,14 @@ export const EnemySystem = {
     activeEnemy: null,
 
     initEnemy(enemyData, level, isBoss = false) {
+        if (!enemyData) {
+            console.error("EnemySystem: Falha ao carregar os dados do inimigo!");
+            return;
+        }
+
         const zone = Math.ceil(level / 10);
         
-        let hpScale = Math.pow(1.15, level - 1); 
+        let hpScale = Math.pow(1.15, Math.max(0, level - 1)); 
         let breakScale = 1 + (level * 0.05);
 
         if (zone > 1) {
@@ -18,16 +23,16 @@ export const EnemySystem = {
             breakScale *= Math.pow(1.2, zone - 1);
         }
 
-        // Aplica modificadores de ASCENSION
         const ascMods = AscensionSystem.getActiveModifiers();
-        hpScale *= ascMods.hpMult;
-        breakScale *= ascMods.breakMult;
+        hpScale *= (ascMods ? ascMods.hpMult : 1);
+        breakScale *= (ascMods ? ascMods.breakMult : 1);
 
-        const maxHP = Math.floor(enemyData.baseHp || enemyData.baseHP * hpScale);
-        const maxBreak = Math.floor(enemyData.baseBreak * breakScale);
+        const maxHP = Math.floor((enemyData.baseHp || enemyData.baseHP || 50) * hpScale);
+        const maxBreak = Math.floor((enemyData.baseBreak || 10) * breakScale);
 
         this.activeEnemy = {
             ...enemyData,
+            name: enemyData.name || (isBoss ? "Chefe Desconhecido" : "Inimigo"),
             maxHP: maxHP,
             currentHP: maxHP,
             breakMax: maxBreak,
@@ -37,7 +42,7 @@ export const EnemySystem = {
             type: isBoss ? "BOSS" : (enemyData.type || "BASIC")
         };
 
-        if (isBoss) {
+        if (isBoss && this.activeEnemy.phases && this.activeEnemy.phases.length > 0) {
             this.activeEnemy.currentPhaseIndex = 0;
             this.activeEnemy.activePhaseId = this.activeEnemy.phases[0].id;
         }
