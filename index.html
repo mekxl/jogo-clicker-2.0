@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BREAK//CORE</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -35,10 +35,6 @@
                 <span class="label">DMG/CLICK</span>
                 <span id="ui-dmg" class="value">1</span>
             </div>
-            <div class="stat-box">
-                <span class="label">TOTAL CLICKS</span>
-                <span id="ui-clicks" class="value text-muted">0</span>
-            </div>
         </div>
     </header>
 
@@ -54,22 +50,30 @@
 
     <div class="main-layout">
         <aside id="relics-panel" class="relics-sidebar">
-            <h3>AUTOMATION</h3>
-            <div id="automation-panel" class="automation-list"></div>
-            <h3 style="margin-top: 20px;">ACTIVE RELICS</h3>
-            <div id="relics-list" class="relics-list"></div>
-            <h3 style="margin-top: 20px;">SYNERGIES</h3>
-            <div id="synergies-list" class="synergies-list"></div>
+            <div class="sidebar-section">
+                <h3>AUTOMATION</h3>
+                <div id="automation-panel" class="automation-list"></div>
+            </div>
+            <div class="sidebar-section">
+                <h3>ACTIVE RELICS</h3>
+                <div id="relics-list" class="relics-list"></div>
+            </div>
+            <div class="sidebar-section">
+                <h3>SYNERGIES</h3>
+                <div id="synergies-list" class="synergies-list"></div>
+            </div>
         </aside>
 
         <main class="center-stage">
             <div id="core-container">
+                <div id="tutorial-text" class="tutorial-overlay">CLICK TO INITIATE</div>
                 <div id="the-core"></div>
                 <div class="frenzy-bar"><div id="frenzy-fill" class="frenzy-fill"></div></div>
             </div>
         </main>
     </div>
 
+    <!-- Modals Overlay -->
     <div id="upgrade-modal" class="overlay hidden">
         <h2 id="modal-title">SELECT UPGRADE</h2>
         <div id="upgrade-choices-container" class="cards-container"></div>
@@ -77,15 +81,15 @@
     
     <div id="event-modal" class="overlay hidden">
         <h1 id="event-title" style="color: #ff00ff; letter-spacing: 3px;">UNKNOWN EVENT</h1>
-        <p id="event-desc" style="max-width: 600px; text-align: center; margin-bottom: 2rem; color: #ccc;"></p>
+        <p id="event-desc" style="max-width: 600px; text-align: center; margin-bottom: 2rem; color: #ccc; padding: 0 1rem;"></p>
         <div id="event-choices" class="event-choices-container"></div>
     </div>
 
     <div id="merchant-modal" class="overlay hidden">
         <h1 style="color: #bb88ff; letter-spacing: 3px;">WANDERING MERCHANT</h1>
-        <p style="color: #ccc; margin-bottom: 2rem;">Trade Energy for powerful assets.</p>
+        <p style="color: #ccc; margin-bottom: 2rem; text-align: center;">Trade Energy for powerful assets.</p>
         <div id="merchant-items" class="cards-container"></div>
-        <div style="margin-top: 2rem; display: flex; gap: 20px;">
+        <div style="margin-top: 2rem; display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
             <button id="btn-merchant-reroll" class="large-btn">REROLL</button>
             <button id="btn-merchant-close" class="large-btn outline-btn">LEAVE NODE</button>
         </div>
@@ -98,20 +102,18 @@
             <label class="meta-item"><input type="checkbox" id="toggle-shake"> Enable Screen Shake</label>
             <label class="meta-item"><input type="checkbox" id="toggle-sfx"> Enable Sound Effects</label>
         </div>
-        <button id="btn-close-settings" class="close-btn">SAVE & CLOSE</button>
+        <button id="btn-close-settings" class="close-btn" style="margin-top: 20px;">SAVE & CLOSE</button>
     </div>
 
     <div id="meta-modal" class="overlay hidden">
         <h2>META PROGRESSION & CODEX</h2>
-        
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#222; padding:10px; border:1px solid #444; margin-bottom:10px; width:400px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#222; padding:10px; border:1px solid #444; margin-bottom:10px; width:90%; max-width:400px;">
             <button id="btn-ascension-down" class="small-btn">&lt;</button>
             <strong id="ui-ascension-label" style="color:#ffaa00">ASCENSION 0</strong>
             <button id="btn-ascension-up" class="small-btn">&gt;</button>
         </div>
-
-        <div id="meta-upgrades-container" class="list-container"></div>
-        <button id="btn-close-meta" class="close-btn">FECHAR</button>
+        <div id="meta-upgrades-container" class="list-container" style="max-height: 50vh; overflow-y: auto;"></div>
+        <button id="btn-close-meta" class="close-btn" style="margin-top: 15px;">FECHAR</button>
     </div>
 
     <div id="game-over-screen" class="overlay hidden">
