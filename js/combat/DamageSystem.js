@@ -13,7 +13,8 @@ import { AscensionSystem } from '../endgame/AscensionSystem.js';
 
 export const DamageSystem = {
     processClickDamage(clickEventData) {
-        if (!GameState.run.isRunActive || GameState.run.isPaused) return;
+        // SEGURANÇA: Se estiver pausado ou transicionando (abrindo modais), ignora clicks cruéis no Core.
+        if (!GameState.run.isRunActive || GameState.run.isPaused || GameState.run.isTransitioning) return;
         const target = EnemySystem.getActiveEnemy();
         if (!target || (target.state !== "ACTIVE" && target.state !== "BREAKING")) return;
 
@@ -35,14 +36,10 @@ export const DamageSystem = {
 
         finalDamage *= stats.globalMultiplier;
         
-        // Ascension Damage Reduction Mod
         const ascMods = AscensionSystem.getActiveModifiers();
         finalDamage *= ascMods.dmgReduction;
         
-        if (target.type === "BOSS") {
-            finalDamage *= BossSystem.getDamageMultiplier();
-        }
-
+        if (target.type === "BOSS") finalDamage *= BossSystem.getDamageMultiplier();
         if (target.state === "BREAKING") finalDamage *= stats.breakMultiplier;
 
         finalDamage = NumberSystem.sanitizeNumber(finalDamage);
@@ -83,7 +80,7 @@ export const DamageSystem = {
     },
 
     processAutoDamage(baseAmount, sourceId) {
-        if (!GameState.run.isRunActive || GameState.run.isPaused) return;
+        if (!GameState.run.isRunActive || GameState.run.isPaused || GameState.run.isTransitioning) return;
         const target = EnemySystem.getActiveEnemy();
         if (!target || (target.state !== "ACTIVE" && target.state !== "BREAKING")) return;
 
