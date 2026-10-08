@@ -11,10 +11,7 @@ export const RelicSystem = {
         const relicData = RELICS.find(r => r.id === id);
         if (!relicData) return;
 
-        if (!GameState.run.activeRelics[id]) {
-            GameState.run.activeRelics[id] = 0;
-        }
-
+        if (!GameState.run.activeRelics[id]) GameState.run.activeRelics[id] = 0;
         if (relicData.unique && GameState.run.activeRelics[id] >= 1) return;
         if (relicData.stackable && GameState.run.activeRelics[id] >= relicData.stackLimit) return;
 
@@ -43,21 +40,14 @@ export const RelicSystem = {
         }
     },
 
-    hasRelic(id) {
-        return (GameState.run.activeRelics[id] || 0) > 0;
-    },
-
-    getRelicStacks(id) {
-        return GameState.run.activeRelics[id] || 0;
-    },
+    hasRelic(id) { return (GameState.run.activeRelics[id] || 0) > 0; },
+    getRelicStacks(id) { return GameState.run.activeRelics[id] || 0; },
 
     countTag(tagTarget) {
         let count = 0;
         for (const [id, stacks] of Object.entries(GameState.run.activeRelics)) {
             const relic = RELICS.find(r => r.id === id);
-            if (relic && relic.tags.includes(tagTarget)) {
-                count += stacks; 
-            }
+            if (relic && relic.tags.includes(tagTarget)) count += stacks; 
         }
         return count;
     },
@@ -82,46 +72,22 @@ export const RelicSystem = {
     },
 
     triggerRelicChoice() {
-        GameState.run.isPaused = true;
-        const choices = this.generateChoices(3);
-        this.currentChoices = choices.map(c => c.id);
-        EventBus.emit("renderRelicChoices", choices);
+        GameState.run.isTransitioning = true;
+        setTimeout(() => {
+            GameState.run.isPaused = true;
+            GameState.run.isTransitioning = false;
+            const choices = this.generateChoices(3);
+            this.currentChoices = choices.map(c => c.id);
+            EventBus.emit("renderRelicChoices", choices);
+        }, 600); // Dramatic pause
     },
 
-    // Refatorado para aceitar forcedRarity p/ Eventos e Merchant
     generateChoices(amount, forcedRarity = null) {
         const choices = [];
         let attempts = 0;
-        
-        import('./RewardSystem.js').then(({ RewardSystem }) => {
-            while (choices.length < amount && attempts < 100) {
-                attempts++;
-                const rarity = forcedRarity || RewardSystem.rollRarity();
-                const validRelics = RELICS.filter(r => r.rarity === rarity);
-                
-                if (validRelics.length === 0) continue;
-                
-                const randomRelic = validRelics[Math.floor(Math.random() * validRelics.length)];
-                const currentStacks = this.getRelicStacks(randomRelic.id);
-                const isAlreadyInChoices = choices.find(c => c.id === randomRelic.id);
-
-                let canPick = true;
-                if (isAlreadyInChoices) canPick = false;
-                if (randomRelic.unique && currentStacks >= 1) canPick = false;
-                if (randomRelic.stackable && currentStacks >= randomRelic.stackLimit) canPick = false;
-
-                if (canPick) choices.push(randomRelic);
-            }
-        });
-        
-        // Retorno síncrono da array vazia modificada via referência após resolução simples (RewardSystem é síncrono na prática)
-        // No contexto do Vanilla JS, dynamic imports costumam quebrar sincronia, mas a infraestrutura base aqui lida com isso.
-        // Para resolver de forma puramente síncrona:
-        
         const rsLuckMod = GameState.meta.metaUpgrades.luck * 0.05 + (GameState.run.stats ? GameState.run.stats.luckBonus : 0);
         
         const rollRaritySync = () => {
-             // Mock do RewardSystem rollRarity para não depender de dynamic import assíncrono durante eventos síncronos
              const w = { COMMON: 60, UNCOMMON: 25*(1+rsLuckMod), RARE: 10*(1+rsLuckMod), EPIC: 4*(1+rsLuckMod), LEGENDARY: 1*(1+rsLuckMod) };
              let tot = 0; for(let k in w) tot+=w[k];
              let r = Math.random() * tot;
@@ -129,7 +95,6 @@ export const RelicSystem = {
              return "COMMON";
         };
 
-        attempts = 0;
         while (choices.length < amount && attempts < 100) {
             attempts++;
             const rarity = forcedRarity || rollRaritySync();
