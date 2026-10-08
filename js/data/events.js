@@ -1,126 +1,122 @@
-// DATA-ONLY: Definição de Eventos Narrativos e suas Escolhas (Risco/Recompensa)
 export const EVENTS = [
     {
-        id: "ev_pact", name: "BLOOD PACT", type: "PACT",
-        description: "A crimson anomaly pulses before you. It demands vitality in exchange for raw power.",
+        id: "ev_pact", name: "PACTO DE SANGUE", type: "PACT",
+        description: "Uma anomalia carmesim pulsa à sua frente. Ela exige vitalidade em troca de poder bruto.",
         choices: [
-            { id: "c1", label: "Accept the Pact", description: "Lose 20% of Current HP. Gain an Epic Upgrade.", effects: { hpPercent: -0.2, grantUpgradeRarity: "EPIC" } },
-            { id: "c2", label: "Decline", description: "Leave safely.", effects: {} }
+            { id: "c1", label: "Aceitar o Pacto", description: "Perca 20% do HP atual. Ganhe um Upgrade Épico.", effects: { hpPercent: -0.2, grantUpgradeRarity: "EPIC" } },
+            { id: "c2", label: "Recusar", description: "Sair em segurança.", effects: {} }
         ]
     },
     {
-        id: "ev_void", name: "THE VOID STARES BACK", type: "VOID",
-        description: "A tear in reality reveals the primordial void. You can reach inside, but the void will take its toll.",
+        id: "ev_void", name: "O VAZIO TE ENCARA", type: "VOID",
+        description: "Uma fenda na realidade revela o vazio primordial. Você pode alcançar o fundo, mas haverá um preço.",
         choices: [
-            { id: "c1", label: "Reach Inside", description: "Take heavy damage. Gain Fragments of Void.", effects: { hpPercent: -0.5, fov: 50 } },
-            { id: "c2", label: "Look Away", description: "Avoid the gaze. Gain 10 Energy.", effects: { energy: 10 } }
+            { id: "c1", label: "Alcançar o Fundo", description: "Sofra dano massivo. Ganhe Fragmentos do Vazio.", effects: { hpPercent: -0.5, fov: 50 } },
+            { id: "c2", label: "Desviar o Olhar", description: "Evite o perigo. Ganhe 10 Energia.", effects: { energy: 10 } }
         ]
     },
     {
-        id: "ev_mirror", name: "SHATTERED MIRROR", type: "MIRROR",
-        description: "A floating mirror reflects a distorted version of your core. It beckons you to touch it.",
+        id: "ev_mirror", name: "ESPELHO ESTILHAÇADO", type: "MIRROR",
+        description: "Um espelho flutuante reflete uma versão distorcida do seu núcleo. Ele convida você a tocá-lo.",
         choices: [
-            {
-                id: "c1", label: "Touch the Glass", description: "50% chance to gain a Relic. 50% chance to lose 50 Energy.",
-                risk: { probability: 0.5, successEffects: { randomRelic: 1 }, failureEffects: { energy: -50 } }
-            },
-            { id: "c2", label: "Shatter It", description: "Gain +5 Base Damage permanently for this run.", effects: { runBaseDamage: 5 } }
+            { id: "c1", label: "Tocar o Vidro", description: "50% chance de ganhar uma Relíquia. 50% chance de perder 50 Energia.", risk: { probability: 0.5, successEffects: { randomRelic: 1 }, failureEffects: { energy: -50 } } },
+            { id: "c2", label: "Quebrá-lo", description: "Ganhe +5 Dano Base permanentemente para esta run.", effects: { runBaseDamage: 5 } }
         ]
     },
     {
-        id: "ev_offer", name: "UNHOLY OFFERING", type: "OFFER",
-        description: "An altar of code awaits a tribute.",
+        id: "ev_offer", name: "OFERENDA PROFANA", type: "OFFER",
+        description: "Um altar de código antigo aguarda um tributo.",
         choices: [
-            { id: "c1", label: "Offer Energy", description: "Pay 100 Energy. Gain a Rare Upgrade.", requirements: { energy: 100 }, effects: { energy: -100, grantUpgradeRarity: "RARE" } },
-            { id: "c2", label: "Ignore", description: "Do nothing.", effects: {} }
+            { id: "c1", label: "Ofertar Energia", description: "Pague 100 Energia. Ganhe um Upgrade Raro.", requirements: { energy: 100 }, effects: { energy: -100, grantUpgradeRarity: "RARE" } },
+            { id: "c2", label: "Ignorar", description: "Siga seu caminho.", effects: {} }
         ]
     },
     {
-        id: "ev_sacrifice", name: "ALTAR OF SACRIFICE", type: "SACRIFICE",
-        description: "The machine requires a piece of your build to grant you ultimate momentum.",
+        id: "ev_sacrifice", name: "ALTAR DO SACRIFÍCIO", type: "SACRIFÍCIO",
+        description: "A máquina exige um pedaço da sua build para lhe conceder ímpeto.",
         choices: [
-            { id: "c1", label: "Sacrifice a Relic", description: "Lose a random Relic. Gain 200 Energy.", requirements: { minRelics: 1 }, effects: { loseRandomRelic: 1, energy: 200 } },
-            { id: "c2", label: "Keep your build", description: "Walk away.", effects: {} }
+            { id: "c1", label: "Sacrificar Relíquia", description: "Perca uma Relíquia aleatória. Ganhe 200 Energia.", requirements: { minRelics: 1 }, effects: { loseRandomRelic: 1, energy: 200 } },
+            { id: "c2", label: "Preservar a Build", description: "Vá embora.", effects: {} }
         ]
     },
     {
-        id: "ev_rift", name: "DIMENSIONAL RIFT", type: "RIFT",
-        description: "A shortcut through the void. It feels unstable.",
+        id: "ev_rift", name: "FENDA DIMENSIONAL", type: "RIFT",
+        description: "Um atalho através do vazio se abriu. Parece altamente instável.",
         choices: [
-            { id: "c1", label: "Enter Rift", description: "Skip the next combat node. Gain 50 Energy.", effects: { skipNextCombat: 1, energy: 50 } },
-            { id: "c2", label: "Stay on Path", description: "Gain 5 Max HP.", effects: { maxHp: 5, heal: 5 } }
+            { id: "c1", label: "Entrar na Fenda", description: "Pule o próximo combate. Ganhe 50 Energia.", effects: { skipNextCombat: 1, energy: 50 } },
+            { id: "c2", label: "Manter o Rumo", description: "Ganhe 5 HP Máximo.", effects: { maxHp: 5, heal: 5 } }
         ]
     },
     {
-        id: "ev_memory", name: "ECHO OF A MEMORY", type: "MEMORY",
-        description: "A faint hologram plays a record of a past run.",
+        id: "ev_memory", name: "ECO DE UMA MEMÓRIA", type: "MEMORY",
+        description: "Um holograma fraco reproduz dados de uma tentativa passada.",
         choices: [
-            { id: "c1", label: "Download Data", description: "Gain 2 Common Upgrades.", effects: { grantUpgradeRarity: "COMMON", repeatUpgrade: 2 } },
-            { id: "c2", label: "Corrupt Data", description: "Convert into 25 Fragments of Void.", effects: { fov: 25 } }
+            { id: "c1", label: "Baixar Dados", description: "Ganhe 2 Upgrades Comuns.", effects: { grantUpgradeRarity: "COMMON", repeatUpgrade: 2 } },
+            { id: "c2", label: "Corromper Dados", description: "Converta a memória em 25 Fragmentos do Vazio.", effects: { fov: 25 } }
         ]
     },
     {
-        id: "ev_entity", name: "WANDERING ENTITY", type: "ENTITY",
-        description: "A neutral entity floats by, carrying a strange artifact.",
+        id: "ev_entity", name: "ENTIDADE ERRANTE", type: "ENTITY",
+        description: "Um ser neutro flutua próximo, carregando um artefato bizarro.",
         choices: [
-            { id: "c1", label: "Attack It", description: "70% chance to gain an Epic Relic. 30% chance to lose 80% HP.", risk: { probability: 0.7, successEffects: { randomRelicRarity: "EPIC" }, failureEffects: { hpPercent: -0.8 } } },
-            { id: "c2", label: "Trade Energy", description: "Pay 50 Energy for a Common Relic.", requirements: { energy: 50 }, effects: { energy: -50, randomRelic: 1 } }
+            { id: "c1", label: "Atacar a Entidade", description: "70% chance de Relíquia Épica. 30% chance de perder 80% do HP.", risk: { probability: 0.7, successEffects: { randomRelicRarity: "EPIC" }, failureEffects: { hpPercent: -0.8 } } },
+            { id: "c2", label: "Negociar", description: "Pague 50 Energia por uma Relíquia Comum.", requirements: { energy: 50 }, effects: { energy: -50, randomRelic: 1 } }
         ]
     },
     {
-        id: "ev_contract", name: "BINDING CONTRACT", type: "CONTRACT",
-        description: "A digital scroll appears. 'Sign away your safety for exponential growth.'",
+        id: "ev_contract", name: "CONTRATO VINCULANTE", type: "CONTRACT",
+        description: "Um pergaminho digital surge. 'Assine sua segurança em troca de poder exponencial.'",
         choices: [
-            { id: "c1", label: "Sign", description: "HP reduced to 1. Gain +500 Energy and a Legendary Upgrade.", effects: { setHp: 1, energy: 500, grantUpgradeRarity: "LEGENDARY" } },
-            { id: "c2", label: "Burn it", description: "Gain 20 Energy.", effects: { energy: 20 } }
+            { id: "c1", label: "Assinar", description: "HP reduzido a 1. Ganhe +500 Energia e 1 Upgrade Lendário.", effects: { setHp: 1, energy: 500, grantUpgradeRarity: "LEGENDARY" } },
+            { id: "c2", label: "Queimar", description: "Ganhe 20 Energia.", effects: { energy: 20 } }
         ]
     },
     {
-        id: "ev_shrine", name: "SHRINE OF RESTORATION", type: "SHRINE",
-        description: "A quiet, safe zone in the chaos.",
+        id: "ev_shrine", name: "SANTUÁRIO DE RESTAURAÇÃO", type: "SHRINE",
+        description: "Uma zona silenciosa e segura em meio ao caos.",
         choices: [
-            { id: "c1", label: "Rest", description: "Restore 50% of your Max HP.", effects: { healPercent: 0.5 } },
-            { id: "c2", label: "Dismantle Shrine", description: "Destroy it for 100 Energy, but take 10% HP damage.", effects: { energy: 100, hpPercent: -0.1 } }
+            { id: "c1", label: "Descansar", description: "Restaure 50% do seu HP Máximo.", effects: { healPercent: 0.5 } },
+            { id: "c2", label: "Desmontar Santuário", description: "Destrua por 100 Energia, sofra 10% Dano de HP.", effects: { energy: 100, hpPercent: -0.1 } }
         ]
     },
     {
-        id: "ev_gamble", name: "HIGH STAKES", type: "GAMBLE",
-        description: "A spinning terminal waits for your input.",
+        id: "ev_gamble", name: "ALTO RISCO", type: "GAMBLE",
+        description: "Um terminal giratório aguarda seu input.",
         choices: [
-            { id: "c1", label: "Roll the Dice", description: "50% chance to double Energy. 50% chance to lose all Energy.", risk: { probability: 0.5, successEffects: { energyMult: 2.0 }, failureEffects: { energyMult: 0.0 } } },
-            { id: "c2", label: "Leave", description: "Walk away.", effects: {} }
+            { id: "c1", label: "Girar a Sorte", description: "50% de dobrar sua Energia. 50% de perder tudo.", risk: { probability: 0.5, successEffects: { energyMult: 2.0 }, failureEffects: { energyMult: 0.0 } } },
+            { id: "c2", label: "Recusar", description: "Siga em frente.", effects: {} }
         ]
     },
     {
-        id: "ev_glitch", name: "SYSTEM GLITCH", type: "GLITCH",
-        description: "The matrix around you is breaking down. Code bleeds into reality.",
+        id: "ev_glitch", name: "FALHA NO SISTEMA", type: "GLITCH",
+        description: "A matriz ao redor está desmoronando. O código sangra na realidade.",
         choices: [
-            { id: "c1", label: "Absorb Code", description: "Gain 3 random Upgrades.", effects: { grantRandomUpgrade: 3 } },
-            { id: "c2", label: "Purge", description: "Heal to full HP.", effects: { healPercent: 1.0 } }
+            { id: "c1", label: "Absorver o Código", description: "Ganhe 3 Upgrades aleatórios.", effects: { grantRandomUpgrade: 3 } },
+            { id: "c2", label: "Expurgar", description: "Cure-se até o HP Máximo.", effects: { healPercent: 1.0 } }
         ]
     },
     {
-        id: "ev_echo", name: "RESONATING CHAMBER", type: "ECHO",
-        description: "The walls echo with the sound of your clicks.",
+        id: "ev_echo", name: "CÂMARA RESSONANTE", type: "ECHO",
+        description: "As paredes ecoam com o som dos seus impactos.",
         choices: [
-            { id: "c1", label: "Amplify", description: "+0.5x Combo Effectiveness.", effects: { runComboBonus: 0.5 } },
-            { id: "c2", label: "Absorb", description: "+1 Energy per Click.", effects: { runEnergyPerClick: 1 } }
+            { id: "c1", label: "Amplificar", description: "+0.5x Efetividade do Combo na Run.", effects: { runComboBonus: 0.5 } },
+            { id: "c2", label: "Absorver", description: "+1 Energia por Clique na Run.", effects: { runEnergyPerClick: 1 } }
         ]
     },
     {
-        id: "ev_cache", name: "ABANDONED CACHE", type: "CACHE",
-        description: "A forgotten supply drop from a previous runner.",
+        id: "ev_cache", name: "CAIXA ABANDONADA", type: "CACHE",
+        description: "Um suprimento esquecido por um desafiante anterior.",
         choices: [
-            { id: "c1", label: "Open Gently", description: "Gain 75 Energy.", effects: { energy: 75 } },
-            { id: "c2", label: "Pry Open", description: "80% chance to gain a Relic. 20% it explodes (lose 30% HP).", risk: { probability: 0.8, successEffects: { randomRelic: 1 }, failureEffects: { hpPercent: -0.3 } } }
+            { id: "c1", label: "Abrir com Cuidado", description: "Ganhe 75 Energia.", effects: { energy: 75 } },
+            { id: "c2", label: "Forçar a Fechadura", description: "80% chance de Relíquia. 20% de explodir (Perca 30% HP).", risk: { probability: 0.8, successEffects: { randomRelic: 1 }, failureEffects: { hpPercent: -0.3 } } }
         ]
     },
     {
-        id: "ev_parasite", name: "PARASITE NEST", type: "NEST",
-        description: "A cluster of dormant parasites clinging to a node.",
+        id: "ev_parasite", name: "NINHO DE PARASITAS", type: "NEST",
+        description: "Um aglomerado de parasitas adormecidos presos a um nodo.",
         choices: [
-            { id: "c1", label: "Burn them", description: "Take 10% HP damage, gain an Epic Upgrade.", effects: { hpPercent: -0.1, grantUpgradeRarity: "EPIC" } },
-            { id: "c2", label: "Harvest", description: "Gain 150 Energy. No damage taken.", effects: { energy: 150 } }
+            { id: "c1", label: "Incinerar", description: "Sofra 10% Dano de HP. Ganhe um Upgrade Épico.", effects: { hpPercent: -0.1, grantUpgradeRarity: "EPIC" } },
+            { id: "c2", label: "Colher", description: "Ganhe 150 Energia. Sem dano.", effects: { energy: 150 } }
         ]
     }
 ];
