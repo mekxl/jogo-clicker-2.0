@@ -16,9 +16,9 @@ body { background-color: var(--bg-color); color: var(--text-color); font-family:
 .multiplier { font-size: 0.9rem; color: var(--core-base); }
 .meta-bar { padding: 0.5rem 2rem; background: #0a0a0a; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; z-index: 9;}
 .text-fov { color: #bb88ff; font-weight: bold; text-shadow: 0 0 5px rgba(187, 136, 255, 0.5); }
-.small-btn, .close-btn { padding: 5px 10px; background: transparent; color: var(--text-color); border: 1px solid #555; cursor: pointer; border-radius: 4px; }
-.small-btn:hover { background: #333; }
-.large-btn { padding: 15px 30px; font-size: 1.2rem; background: #bb88ff; color: #000; border: none; font-family: var(--font-main); font-weight: bold; cursor: pointer; border-radius: 4px;}
+.small-btn, .close-btn { padding: 5px 10px; background: transparent; color: var(--text-color); border: 1px solid #555; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+.small-btn:hover, .close-btn:hover { background: #333; }
+.large-btn { padding: 15px 30px; font-size: 1.2rem; background: #bb88ff; color: #000; border: none; font-family: var(--font-main); font-weight: bold; cursor: pointer; border-radius: 4px; transition: transform 0.1s;}
 .large-btn.outline-btn { background: transparent; border: 2px solid #555; color: #fff; }
 .large-btn:hover:not(.disabled) { transform: scale(1.05); }
 .large-btn.disabled { opacity: 0.3; cursor: not-allowed; }
@@ -45,9 +45,13 @@ body { background-color: var(--bg-color); color: var(--text-color); font-family:
 @keyframes tutorialPulse { from { transform: translateY(0); opacity: 0.5; } to { transform: translateY(-5px); opacity: 1; } }
 .tutorial-overlay.hidden { opacity: 0; }
 
-/* The Core */
+/* The Core & GAME FEEL */
 #the-core { width: 250px; height: 250px; background: radial-gradient(circle, var(--core-base) 10%, var(--core-dark) 80%, #000 100%); border-radius: 50%; box-shadow: 0 0 60px var(--core-glow), inset 0 0 20px #000; cursor: pointer; transition: transform 0.05s ease-out, box-shadow 0.1s ease-out, filter 0.3s ease-out; touch-action: manipulation; }
 #the-core:active { transform: scale(0.92) !important; box-shadow: 0 0 20px var(--core-glow), inset 0 0 40px #000; }
+#the-core.squash { animation: squashClick 0.15s ease-out; }
+@keyframes squashClick { 0% { transform: scale(1); } 50% { transform: scale(0.9); } 100% { transform: scale(1); } }
+.flash-white { filter: brightness(10) hue-rotate(0deg) !important; }
+
 #the-core.pulse { animation: corePulse 0.2s ease-out; }
 .frenzy-bar { width: 100%; height: 6px; background: #222; margin-top: 30px; border-radius: 3px; overflow: hidden; }
 .frenzy-fill { height: 100%; width: 0%; background: #fff; transition: width 0.1s linear, background 0.2s; }
@@ -55,7 +59,7 @@ body { background-color: var(--bg-color); color: var(--text-color); font-family:
 .breaking-state { animation: breakPulse 0.5s infinite alternate !important; filter: hue-rotate(180deg) brightness(1.5); }
 .defeated-state { filter: grayscale(100%) opacity(0.3); transform: scale(0.8) !important; pointer-events: none;}
 @keyframes corePulse { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
-@keyframes breakPulse { 0% { box-shadow: 0 0 20px #00ccff, inset 0 0 20px #000; } 100% { box-shadow: 0 0 60px #fff, inset 0 0 40px #00ccff; transform: scale(1.02) !important; } }
+@keyframes breakPulse { 0% { box-shadow: 0 0 20px #00ccff, inset 0 0 20px #000; } 100% { box-shadow: 0 0 80px #fff, inset 0 0 40px #00ccff; transform: scale(1.02) !important; } }
 @keyframes frenzyPulse { 0% { box-shadow: 0 0 40px #ff00ff, inset 0 0 30px #000; transform: scale(1.05) !important; } 100% { box-shadow: 0 0 100px #fff, inset 0 0 50px #ff00ff; transform: scale(1.1) !important; } }
 .shake-low { animation: shake 0.1s infinite; animation-duration: 0.1s; }
 .shake-medium { animation: shake 0.1s infinite; animation-duration: 0.2s; transform-origin: center; }
@@ -72,8 +76,8 @@ body { background-color: var(--bg-color); color: var(--text-color); font-family:
 .particle { position: absolute; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; z-index: 30; will-change: transform, opacity; left: 50%; top: 50%; }
 .animate-particle { animation: particleExplode 0.6s ease-out forwards; }
 @keyframes particleExplode { 0% { opacity: 1; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); } }
-.floating-break-text { position: absolute; color: #fff; font-size: 3rem; font-weight: 900; letter-spacing: 5px; text-shadow: 0 0 20px #00ccff; animation: breakPop 1s ease-out forwards; pointer-events: none; z-index: 50; }
-@keyframes breakPop { 0% { transform: scale(0.5); opacity: 0; } 20% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1.5) translateY(-50px); opacity: 0; } }
+.floating-break-text { position: absolute; color: #fff; font-weight: 900; letter-spacing: 5px; text-shadow: 0 0 20px #00ccff; animation: breakPop 1.2s ease-out forwards; pointer-events: none; z-index: 50; }
+@keyframes breakPop { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.5) translateY(-50px); opacity: 0; } }
 
 /* Modals */
 .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; overflow-y: auto; padding: 20px; }
@@ -99,6 +103,7 @@ body { background-color: var(--bg-color); color: var(--text-color); font-family:
 .meta-item button { background: #bb88ff; color: #000; border: none; padding: 5px 10px; cursor: pointer; font-weight: bold; }
 .meta-item button:disabled { background: #444; color: #222; cursor: not-allowed; }
 .run-summary { text-align: left; background: #111; padding: 20px; border: 1px solid #333; margin-bottom: 20px; width: 100%; max-width: 400px;}
+.run-summary p { margin-bottom: 5px; font-size: 0.9rem; color: #ccc;}
 .challenge-toast { position: fixed; bottom: 20px; right: 20px; background: rgba(0, 0, 0, 0.9); border-left: 4px solid #ffaa00; padding: 15px; color: #fff; z-index: 1000; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
 /* MOBILE RESPONSIVENESS */
