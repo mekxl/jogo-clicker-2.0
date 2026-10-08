@@ -11,12 +11,12 @@
         <div class="logo">BREAK//CORE</div>
         <div class="stats-container">
             <div class="stat-box">
-                <span class="label">NODE <span id="ui-encounter">1</span></span>
+                <span class="label">NODO <span id="ui-encounter">1</span></span>
                 <span id="ui-enemy-name" class="value" style="font-size: 0.9rem; color: #fff;">Enemy Name</span>
                 <span id="ui-enemy-phase" style="font-size: 0.75rem; font-weight: bold; margin-top:2px;"></span>
             </div>
             <div class="stat-box">
-                <span class="label">TARGET HP</span>
+                <span class="label">HP DO ALVO</span>
                 <span id="ui-hp" class="value">0/0</span>
             </div>
             <div class="stat-box">
@@ -24,7 +24,7 @@
                 <span id="ui-break" class="value text-break">0/0</span>
             </div>
             <div class="stat-box">
-                <span class="label">ENERGY</span>
+                <span class="label">ENERGIA</span>
                 <span id="ui-energy" class="value text-energy">0</span>
             </div>
             <div class="stat-box">
@@ -32,7 +32,7 @@
                 <span class="value"><span id="ui-combo" class="text-combo">0</span> <span class="multiplier">(x<span id="ui-multiplier">1</span>)</span></span>
             </div>
             <div class="stat-box">
-                <span class="label">DMG/CLICK</span>
+                <span class="label">DANO/CLIQUE</span>
                 <span id="ui-dmg" class="value">1</span>
             </div>
         </div>
@@ -40,76 +40,75 @@
 
     <div class="meta-bar">
         <div>
-            <span>FRAGMENTS OF VOID: <span id="ui-fov" class="text-fov">0</span></span>
+            <span>FRAGMENTOS DO VAZIO: <span id="ui-fov" class="text-fov">0</span></span>
         </div>
         <div>
-            <button id="btn-open-settings" class="small-btn">SETTINGS</button>
-            <button id="btn-open-meta" class="small-btn">META PROGRESSION</button>
+            <button id="btn-open-settings" class="small-btn">CONFIGS</button>
+            <button id="btn-open-meta" class="small-btn">META PROGRESSO</button>
         </div>
     </div>
 
     <div class="main-layout">
         <aside id="relics-panel" class="relics-sidebar">
             <div class="sidebar-section">
-                <h3>AUTOMATION</h3>
+                <h3>AUTOMAÇÃO</h3>
                 <div id="automation-panel" class="automation-list"></div>
             </div>
             <div class="sidebar-section">
-                <h3>ACTIVE RELICS</h3>
+                <h3>RELÍQUIAS ATIVAS</h3>
                 <div id="relics-list" class="relics-list"></div>
             </div>
             <div class="sidebar-section">
-                <h3>SYNERGIES</h3>
+                <h3>SINERGIAS</h3>
                 <div id="synergies-list" class="synergies-list"></div>
             </div>
         </aside>
 
         <main class="center-stage">
             <div id="core-container">
-                <div id="tutorial-text" class="tutorial-overlay">CLICK TO INITIATE</div>
+                <div id="tutorial-text" class="tutorial-overlay">CLIQUE PARA INICIAR</div>
                 <div id="the-core"></div>
                 <div class="frenzy-bar"><div id="frenzy-fill" class="frenzy-fill"></div></div>
             </div>
         </main>
     </div>
 
-    <!-- Modals Overlay -->
     <div id="upgrade-modal" class="overlay hidden">
-        <h2 id="modal-title">SELECT UPGRADE</h2>
+        <h2 id="modal-title">SELECIONE UM UPGRADE</h2>
         <div id="upgrade-choices-container" class="cards-container"></div>
     </div>
     
     <div id="event-modal" class="overlay hidden">
-        <h1 id="event-title" style="color: #ff00ff; letter-spacing: 3px;">UNKNOWN EVENT</h1>
+        <h1 id="event-title" style="color: #ff00ff; letter-spacing: 3px;">EVENTO DESCONHECIDO</h1>
         <p id="event-desc" style="max-width: 600px; text-align: center; margin-bottom: 2rem; color: #ccc; padding: 0 1rem;"></p>
         <div id="event-choices" class="event-choices-container"></div>
     </div>
 
     <div id="merchant-modal" class="overlay hidden">
-        <h1 style="color: #bb88ff; letter-spacing: 3px;">WANDERING MERCHANT</h1>
-        <p style="color: #ccc; margin-bottom: 2rem; text-align: center;">Trade Energy for powerful assets.</p>
+        <h1 style="color: #bb88ff; letter-spacing: 3px;">MERCADOR ERRANTE</h1>
+        <p style="color: #ccc; margin-bottom: 2rem; text-align: center;">Troque Energia por artefatos de poder.</p>
         <div id="merchant-items" class="cards-container"></div>
         <div style="margin-top: 2rem; display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
-            <button id="btn-merchant-reroll" class="large-btn">REROLL</button>
-            <button id="btn-merchant-close" class="large-btn outline-btn">LEAVE NODE</button>
+            <button id="btn-merchant-reroll" class="large-btn">REROLAR</button>
+            <button id="btn-merchant-close" class="large-btn outline-btn">SAIR DO NODO</button>
         </div>
     </div>
 
     <div id="settings-modal" class="overlay hidden">
-        <h2>SETTINGS</h2>
+        <h2>CONFIGURAÇÕES</h2>
         <div class="list-container">
-            <label class="meta-item"><input type="checkbox" id="toggle-particles"> Enable Particles</label>
-            <label class="meta-item"><input type="checkbox" id="toggle-shake"> Enable Screen Shake</label>
-            <label class="meta-item"><input type="checkbox" id="toggle-sfx"> Enable Sound Effects</label>
+            <label class="meta-item"><input type="checkbox" id="toggle-particles"> Ativar Partículas</label>
+            <label class="meta-item"><input type="checkbox" id="toggle-shake"> Ativar Tremor de Tela</label>
+            <label class="meta-item"><input type="checkbox" id="toggle-sfx"> Ativar Efeitos Sonoros</label>
         </div>
-        <button id="btn-close-settings" class="close-btn" style="margin-top: 20px;">SAVE & CLOSE</button>
+        <button id="btn-close-settings" class="close-btn" style="margin-top: 20px;">SALVAR E FECHAR</button>
     </div>
 
     <div id="meta-modal" class="overlay hidden">
-        <h2>META PROGRESSION & CODEX</h2>
+        <h2>META PROGRESSO E CÓDICE</h2>
         <div style="display:flex; justify-content:space-between; align-items:center; background:#222; padding:10px; border:1px solid #444; margin-bottom:10px; width:90%; max-width:400px;">
             <button id="btn-ascension-down" class="small-btn">&lt;</button>
-            <strong id="ui-ascension-label" style="color:#ffaa00">ASCENSION 0</strong>
+            <strong id="ui-ascension-label" style="color:#ffaa00">ASCENSÃO 0</strong>
             <button id="btn-ascension-up" class="small-btn">&gt;</button>
         </div>
         <div id="meta-upgrades-container" class="list-container" style="max-height: 50vh; overflow-y: auto;"></div>
@@ -117,13 +116,10 @@
     </div>
 
     <div id="game-over-screen" class="overlay hidden">
-        <h1 id="game-over-title">RUN ENDED</h1>
-        <div class="run-summary">
-            <p>Total Clicks: <span id="end-clicks"></span></p>
-            <p>Total Damage: <span id="end-dmg"></span></p>
-            <p class="text-fov">Fragments of Void Gained: +<span id="end-fov"></span></p>
+        <h1 id="game-over-title">RUN ENCERRADA</h1>
+        <div id="end-stats" class="run-summary">
         </div>
-        <button id="btn-restart">INICIAR NOVA RUN</button>
+        <button id="btn-restart" class="large-btn">INICIAR NOVA RUN</button>
     </div>
 
     <script type="module" src="js/main.js"></script>
