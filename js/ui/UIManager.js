@@ -23,6 +23,7 @@ export const UIManager = {
             fov: document.getElementById('ui-fov'),
             encounter: document.getElementById('ui-encounter'),
             enemyName: document.getElementById('ui-enemy-name'),
+            enemyPhase: document.getElementById('ui-enemy-phase'), // Novo
             break: document.getElementById('ui-break'),
             
             frenzyFill: document.getElementById('frenzy-fill'),
@@ -44,7 +45,11 @@ export const UIManager = {
             metaModal: document.getElementById('meta-modal'),
             metaContainer: document.getElementById('meta-upgrades-container'),
             relicsList: document.getElementById('relics-list'),
-            synergiesList: document.getElementById('synergies-list')
+            synergiesList: document.getElementById('synergies-list'),
+            
+            endClicks: document.getElementById('end-clicks'),
+            endDmg: document.getElementById('end-dmg'),
+            endFov: document.getElementById('end-fov')
         };
 
         EventBus.on("runStarted", () => this.hideGameOver());
@@ -77,7 +82,6 @@ export const UIManager = {
         });
         document.getElementById('btn-close-meta').addEventListener('click', () => this.els.metaModal.classList.add('hidden'));
 
-        // Configurações
         document.getElementById('btn-open-settings').addEventListener('click', () => {
             document.getElementById('toggle-particles').checked = GameState.meta.settings.particlesEnabled;
             document.getElementById('toggle-shake').checked = GameState.meta.settings.screenShakeEnabled;
@@ -104,14 +108,23 @@ export const UIManager = {
         if (r.eventState === "ACTIVE") {
             this.els.enemyName.innerText = "UNKNOWN EVENT";
             this.els.enemyName.style.color = "#ff00ff";
+            this.els.enemyPhase.innerText = "";
         } else if (r.merchantState === "ACTIVE") {
             this.els.enemyName.innerText = "MERCHANT NODE";
             this.els.enemyName.style.color = "#bb88ff";
+            this.els.enemyPhase.innerText = "";
         } else if (enemy && r.merchantState === "NONE" && r.eventState === "NONE") {
-            this.els.enemyName.innerText = enemy.name;
+            this.els.enemyName.innerText = enemy.type === "BOSS" ? `[BOSS] ${enemy.name}` : enemy.name;
             this.els.enemyName.style.color = enemy.color;
             this.els.hp.innerText = `${fn(enemy.currentHP)}/${fn(enemy.maxHP)}`;
             
+            if (enemy.type === "BOSS" && enemy.phases[enemy.currentPhaseIndex]) {
+                this.els.enemyPhase.innerText = `Phase ${enemy.currentPhaseIndex + 1}: ${enemy.phases[enemy.currentPhaseIndex].name}`;
+                this.els.enemyPhase.style.color = "#ff0000";
+            } else {
+                this.els.enemyPhase.innerText = "";
+            }
+
             if(enemy.state === "BREAKING") this.els.break.innerText = "VULNERABLE!";
             else this.els.break.innerText = `${fn(enemy.breakCurrent)}/${fn(enemy.breakMax)}`;
         }
