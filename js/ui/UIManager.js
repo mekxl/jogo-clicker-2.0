@@ -4,12 +4,14 @@ import { NumberSystem } from '../core/NumberSystem.js';
 import { UpgradeSystem } from '../progression/UpgradeSystem.js';
 import { RelicSystem } from '../progression/RelicSystem.js';
 import { MetaProgression } from '../progression/MetaProgression.js';
+import { AscensionSystem } from '../endgame/AscensionSystem.js';
 import { UPGRADE_RARITIES } from '../data/upgrades.js';
 import { EnemySystem } from '../combat/EnemySystem.js';
 import { RELICS, SYNERGIES } from '../data/relics.js';
 import { EventSystem } from '../events/EventSystem.js';
 import { MerchantSystem } from '../events/MerchantSystem.js';
 import { SaveSystem } from '../core/SaveSystem.js';
+import { CHALLENGES } from '../data/challenges.js';
 
 export const UIManager = {
     init() {
@@ -23,13 +25,14 @@ export const UIManager = {
             fov: document.getElementById('ui-fov'),
             encounter: document.getElementById('ui-encounter'),
             enemyName: document.getElementById('ui-enemy-name'),
-            enemyPhase: document.getElementById('ui-enemy-phase'), // Novo
+            enemyPhase: document.getElementById('ui-enemy-phase'), 
             break: document.getElementById('ui-break'),
             
             frenzyFill: document.getElementById('frenzy-fill'),
             automationPanel: document.getElementById('automation-panel'),
             
             gameOverScreen: document.getElementById('game-over-screen'),
+            gameOverTitle: document.getElementById('game-over-title'),
             upgradeModal: document.getElementById('upgrade-modal'),
             modalTitle: document.getElementById('modal-title'),
             upgradeContainer: document.getElementById('upgrade-choices-container'),
@@ -52,8 +55,13 @@ export const UIManager = {
             endFov: document.getElementById('end-fov')
         };
 
-        EventBus.on("runStarted", () => this.hideGameOver());
-        EventBus.on("runEnded", (data) => this.showGameOver(data));
+        EventBus.on("runStarted", () => {
+            this.hideGameOver();
+            this.updateAscensionUI();
+        });
+        EventBus.on("runEnded", (data) => this.showGameOver(data, false));
+        EventBus.on("runVictory", (data) => this.showGameOver(data, true));
+        
         EventBus.on("stateUpdated", () => this.updateAll());
         EventBus.on("metaUpdated", () => this.updateMetaUI());
         EventBus.on("frenzyUpdated", () => this.updateFrenzyUI());
@@ -70,6 +78,8 @@ export const UIManager = {
         EventBus.on("showEvent", (ev) => this.showEventModal(ev));
         EventBus.on("showMerchant", (data) => this.showMerchantModal(data));
         
+        EventBus.on("challengeCompleted", (id) => this.showChallengeToast(id));
+
         document.getElementById('btn-merchant-reroll').addEventListener('click', () => MerchantSystem.reroll());
         document.getElementById('btn-merchant-close').addEventListener('click', () => {
             this.els.merchantModal.classList.add('hidden');
@@ -81,6 +91,20 @@ export const UIManager = {
             this.els.metaModal.classList.remove('hidden');
         });
         document.getElementById('btn-close-meta').addEventListener('click', () => this.els.metaModal.classList.add('hidden'));
+        
+        // Controle de Ascension no Menu de Meta
+        document.getElementById('btn-ascension-down').addEventListener('click', () => {
+            if(GameState.meta.currentAscensionSelection > 0) {
+                AscensionSystem.setAscension(GameState.meta.currentAscensionSelection - 1);
+                this.updateAscensionUI();
+            }
+        });
+        document.getElementById('btn-ascension-up').addEventListener('click', () => {
+            if(GameState.meta.currentAscensionSelection < GameState.meta.highestAscensionUnlocked) {
+                AscensionSystem.setAscension(GameState.meta.currentAscensionSelection + 1);
+                this.updateAscensionUI();
+            }
+        });
 
         document.getElementById('btn-open-settings').addEventListener('click', () => {
             document.getElementById('toggle-particles').checked = GameState.meta.settings.particlesEnabled;
@@ -97,6 +121,7 @@ export const UIManager = {
         });
 
         this.updateRelicsPanel();
+        this.updateAscensionUI();
     },
 
     updateAll() {
@@ -140,6 +165,21 @@ export const UIManager = {
         this.updateFrenzyUI();
     },
 
+    updateAscensionUI() {
+        document.getElementById('ui-ascension-label').innerText = `ASCENSION ${GameState.meta.currentAscensionSelection}`;
+    },
+
+    showChallengeToast(id) {
+        const ch = CHALLENGES.find(c => c.id === id);
+        if (!ch) return;
+        
+        const toast = document.createElement('div');
+        toast.className = 'challenge-toast float-up-anim';
+        toast.innerHTML = `<strong>CHALLENGE COMPLETED</strong><br>${ch.name}<br><span style="font-size: 0.7rem;">+${ch.rewardFov} FoV</span>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    },
+
     updateFrenzyUI() {
         if (!GameState.run.isRunActive) return;
         const frenzy = GameState.run.frenzy;
@@ -180,8 +220,14 @@ export const UIManager = {
                 ${tagsHtml}
             `;
             card.addEventListener('click', () => {
-                if(isRelic) RelicSystem.addRelic(item.id);
-                else UpgradeSystem.selectUpgrade(item.id);
+                if(isRelic) {
+                    RelicSystem.addRelic(item.id);
+                    EventBus.emit("relicApplied", item.id); // Para Codex
+                }
+                else {
+                    UpgradeSystem.selectUpgrade(item.id);
+                    EventBus.emit("upgradeApplied", item.id); // Para Codex
+                }
             });
             this.els.upgradeContainer.appendChild(card);
         });
@@ -265,11 +311,20 @@ export const UIManager = {
         }
     },
 
-    showGameOver(data) {
+    showGameOver(data, isVictory) {
         const fn = NumberSystem.formatNumber.bind(NumberSystem);
+        this.els.gameOverTitle.innerText = isVictory ? "RUN VICTORY" : "RUN ENDED";
+        this.els.gameOverTitle.style.color = isVictory ? "#ffaa00" : "var(--core-base)";
+        
         document.getElementById('end-clicks').innerText = fn(data.runState.totalClicks);
         document.getElementById('end-dmg').innerText = fn(data.runState.totalDamage);
         document.getElementById('end-fov').innerText = fn(data.fovGained);
+        
+        // Se desbloqueou Ascension
+        if (isVictory) {
+            document.getElementById('end-fov').innerHTML += `<br><span style="color:#00ccff">Ascension Unlocked!</span>`;
+        }
+
         this.updateMetaUI(); 
         this.els.gameOverScreen.classList.remove('hidden');
     },
