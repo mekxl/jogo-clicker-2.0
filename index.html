@@ -43,7 +43,9 @@
     </header>
 
     <div class="meta-bar">
-        <span>FRAGMENTS OF VOID: <span id="ui-fov" class="text-fov">0</span></span>
+        <div>
+            <span>FRAGMENTS OF VOID: <span id="ui-fov" class="text-fov">0</span></span>
+        </div>
         <div>
             <button id="btn-open-settings" class="small-btn">SETTINGS</button>
             <button id="btn-open-meta" class="small-btn">META PROGRESSION</button>
@@ -100,13 +102,20 @@
     </div>
 
     <div id="meta-modal" class="overlay hidden">
-        <h2>META PROGRESSION</h2>
+        <h2>META PROGRESSION & CODEX</h2>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#222; padding:10px; border:1px solid #444; margin-bottom:10px; width:400px;">
+            <button id="btn-ascension-down" class="small-btn">&lt;</button>
+            <strong id="ui-ascension-label" style="color:#ffaa00">ASCENSION 0</strong>
+            <button id="btn-ascension-up" class="small-btn">&gt;</button>
+        </div>
+
         <div id="meta-upgrades-container" class="list-container"></div>
         <button id="btn-close-meta" class="close-btn">FECHAR</button>
     </div>
 
     <div id="game-over-screen" class="overlay hidden">
-        <h1>RUN ENDED</h1>
+        <h1 id="game-over-title">RUN ENDED</h1>
         <div class="run-summary">
             <p>Total Clicks: <span id="end-clicks"></span></p>
             <p>Total Damage: <span id="end-dmg"></span></p>
