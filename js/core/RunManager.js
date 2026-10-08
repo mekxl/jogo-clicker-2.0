@@ -17,9 +17,6 @@ export const RunManager = {
         FrenzySystem.reset();
         AutomationSystem.start();
 
-        // Opcional para Stage 6: Garantir que o jogador tenha pelo menos 1 Drone para ver a automação funcionar.
-        AutomationSystem.grantAutomation('drone_basic', 1);
-
         EncounterManager.initRun();
         
         EventBus.emit("runStarted", GameState);
@@ -50,6 +47,6 @@ export const RunManager = {
 };
 
 EventBus.on("enemyDefeated", (enemy) => {
-    FrenzySystem.addFrenzy(10); // Mata inimigo ganha muito frenzy
+    FrenzySystem.addFrenzy(enemy.type === "BOSS" ? 50 : 10); 
     EncounterManager.onEnemyDefeated(enemy);
 });
