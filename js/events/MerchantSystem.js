@@ -22,13 +22,11 @@ export const MerchantSystem = {
         this.currentItems = [];
         const pool = [...MERCHANT_POOL];
         
-        // Gera 3 itens aleatórios do pool
         for (let i = 0; i < 3; i++) {
             if (pool.length === 0) break;
             const idx = Math.floor(Math.random() * pool.length);
             const item = pool.splice(idx, 1)[0];
             
-            // Inflação leve na run baseada em rerolls
             const inflation = 1 + (GameState.run.merchantRerolls * 0.2);
             this.currentItems.push({
                 ...item,
@@ -64,21 +62,23 @@ export const MerchantSystem = {
         if (!item || item.purchased) return;
         if (GameState.run.energy < item.cost) return;
 
-        // Processa compra
         GameState.run.energy -= item.cost;
         item.purchased = true;
 
-        // Aplica Efeito
         if (item.type === "RELIC") {
             const pool = RelicSystem.generateChoices(1); 
             if (pool.length > 0) RelicSystem.addRelic(pool[0].id, true);
         } else if (item.type === "UPGRADE") {
             const pool = RewardSystem.generateChoices(1, item.rarity);
-            if (pool.length > 0) UpgradeSystem.selectUpgrade(pool[0].id, true);
+            if (pool.length > 0) {
+                UpgradeSystem.selectUpgrade(pool[0].id, true);
+                EventBus.emit("upgradeApplied", pool[0].id); // Integração Codex
+            }
         } else if (item.type === "HEAL") {
             const healAmount = Math.floor(GameState.run.maxHP * item.amount);
             GameState.run.currentHP += healAmount;
             if(GameState.run.currentHP > GameState.run.maxHP) GameState.run.currentHP = GameState.run.maxHP;
+            GameState.run.merchantHealsUsed++; // Tracking de challenge
         } else if (item.type === "MAX_HP") {
             GameState.run.maxHP += item.amount;
             GameState.run.currentHP += item.amount;
