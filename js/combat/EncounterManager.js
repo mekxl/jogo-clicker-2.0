@@ -22,7 +22,6 @@ export const EncounterManager = {
         GameState.run.encounterIndex++;
         const node = GameState.run.encounterIndex;
 
-        // A cada 10 Nodos = Boss Fight
         if (node > 0 && node % 10 === 0) {
             GameState.run.zoneIndex = Math.ceil(node / 10);
             EventBus.emit("encounterStarted", node);
@@ -56,7 +55,6 @@ export const EncounterManager = {
     spawnBoss(zone) {
         const level = GameState.run.encounterIndex;
         const keys = Object.keys(BOSSES);
-        // Boss 1 na Zona 1, Boss 3 na Zona 3
         const bossIdx = Math.min(zone - 1, keys.length - 1);
         const bossKey = keys[bossIdx];
         EnemySystem.initEnemy(BOSSES[bossKey], level, true);
@@ -64,11 +62,14 @@ export const EncounterManager = {
 
     onEnemyDefeated(enemy) {
         GameState.run.combatCount++;
+        GameState.run.isTransitioning = true; // Trava inputs imediatamente
+        
         EventBus.emit("encounterCompleted", enemy);
         EventBus.emit("stateUpdated");
         
         setTimeout(() => {
             if (!GameState.run.isRunActive) return;
+            GameState.run.isTransitioning = false; // Destrava e decide
             
             if (enemy.type === "BOSS") {
                 this.grantBossRewards(enemy);
@@ -77,7 +78,7 @@ export const EncounterManager = {
             } else {
                 this.advanceNode();
             }
-        }, 1500);
+        }, 1200); // Antecipação / Dramatização da morte
     },
 
     grantBossRewards(boss) {
@@ -97,16 +98,15 @@ export const EncounterManager = {
         }
         
         EventBus.emit("bossRewardsGranted", boss);
-        GameState.run.isPaused = false;
         
         setTimeout(() => {
-            // CONDIÇÃO DE VITÓRIA: Derrotou o Boss 3 (Crimson Core)
+            GameState.run.isPaused = false;
             if (boss.id === "boss_crimson") {
-                RunManager.endRun(true); // true = Vitoria
+                RunManager.endRun(true); 
             } else {
                 this.advanceNode();
             }
-        }, 2000);
+        }, 3000); // Exibe loot do boss por 3s antes de continuar
     }
 };
 
